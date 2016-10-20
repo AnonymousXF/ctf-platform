@@ -39,7 +39,7 @@ def scoreboard_variables():
     return var
 
 # Blueprints
-from modules import api, admin
+import api, admin
 app.register_blueprint(api.api)
 app.register_blueprint(admin.admin)
 

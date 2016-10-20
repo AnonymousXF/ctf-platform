@@ -54,7 +54,7 @@ elif operation == "gen-team":
         print("Team added with id {}".format(t.id))
 
 elif operation == "add-admin":
-    username = input("Username: ")
+    username = raw_input("Username: ")
     password = getpass.getpass().encode()
     pwhash = utils.admin.create_password(password)
     r = random.SystemRandom()

@@ -96,10 +96,10 @@ def register():
     if request.method == "GET":
         return render_template("register.html")
     elif request.method == "POST":
-        error, message = captcha.verify_captcha()
-        if error:
-            flash(message)
-            return render_template("register.html")
+        #error, message = captcha.verify_captcha()
+        #if error:
+            #flash(message)
+            #return render_template("register.html")
 
         team_name = request.form["team_name"].strip()
         team_email = request.form["team_email"].strip()
@@ -117,9 +117,9 @@ def register():
         if not affiliation or len(affiliation) > 100:
             affiliation = "No affiliation"
 
-        if not email.is_valid_email(team_email):
-            flash("You're lying")
-            return render_template("register.html")
+        #if not email.is_valid_email(team_email):
+            #flash("You're lying")
+            #return render_template("register.html")
 
         team_key = misc.generate_team_key()
         confirmation_key = misc.generate_confirmation_key()

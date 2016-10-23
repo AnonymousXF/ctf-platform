@@ -29,7 +29,7 @@ author: ME!
 category: Binary
 description: binary binary binary binary. i love binary
 points: 250
-flags: "flag{whatever}"
+flag: "flag{whatever}"
 ```
 
 Then add them with `./ctftool add-challenge problem.yml` and it'll get put in the

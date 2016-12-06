@@ -5,7 +5,7 @@ from database import Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailu
 from datetime import datetime
 from peewee import fn
 
-from utils import decorators, flag, cache, misc, captcha, email
+from utils import decorators, flag, cache, misc, captcha, sendemail
 import utils.scoreboard
 
 import config
@@ -128,7 +128,7 @@ def register():
                            email_confirmation_key=confirmation_key)
         TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
-        email.send_confirmation_email(team_email, confirmation_key, team_key)
+        sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
         session["team_id"] = team.id
         flash("Team created.")

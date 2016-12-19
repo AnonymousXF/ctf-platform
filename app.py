@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
 from flask import Flask, render_template, session, redirect, url_for, request, g, flash, jsonify
 app = Flask(__name__)
 
-from database import Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, db
+from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, db
 from datetime import datetime
 from peewee import fn
 
-from utils import decorators, flag, cache, misc, captcha, sendemail
+from utils import user, decorators, flag, cache, misc, captcha, sendemail
 import utils.scoreboard
 
 import config
@@ -73,16 +74,17 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
     elif request.method == "POST":
-        team_key = request.form["team_key"]
-
+        username = request.form["user_name"]
+        password = request.form["user_pwd"]
         try:
-            team = Team.get(Team.key == team_key)
-            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
-            session["team_id"] = team.id
-            flash("Login successful.")
+            user = User.get(User.username == username)
+            result = utils.user.verify_password(user, password)
+            if result:
+                session["user_id"] = user.id
+                flash("登录成功")
             return redirect(url_for('dashboard'))
-        except Team.DoesNotExist:
-            flash("Couldn't find your team. Check your team key.", "error")
+        except User.DoesNotExist:
+            flash("用户不存在，请检查用户名密码，重新输入")
             return render_template("login.html")
 
 @app.route('/register/', methods=["GET", "POST"])
@@ -91,61 +93,62 @@ def register():
         if "admin" in session and session["admin"]:
             pass
         else:
-            return "Registration is currently disabled. Email ctf@tjhsst.edu to create an account."
+            return "抱歉，现在暂时无法注册。有问题请联系hustctf@163.com"
 
     if request.method == "GET":
-        return render_template("register.html")
+        return render_template("user_register.html")
     elif request.method == "POST":
         #error, message = captcha.verify_captcha()
         #if error:
             #flash(message)
-            #return render_template("register.html")
+            #return render_template("user_register.html")
 
-        team_name = request.form["team_name"].strip()
-        team_email = request.form["team_email"].strip()
-        team_elig = "team_eligibility" in request.form
-        affiliation = request.form["affiliation"].strip()
+        user_name = request.form["user_name"].strip()
+        user_email = request.form["user_email"].strip()
+        user_pwd = request.form["user_pwd"].strip()
+        pwd_confirmed = request.form["pwd_confirmed"].strip()
+
+        if not utils.user.check_Password(user_pwd):
+            flash("密码需为8位及8位以上的字母与数字组合")
+            return render_template("user_register.html")
+		
+        try:
+            if(User.get(User.username == user_name)):
+			    flash("该用户名已被占用")
+			    return render_template("user_register.html")		
+        except User.DoesNotExist:		
+				pass
 
         try:
-            if(Team.get(Team.name == team_name)):
-			    flash("The name has existed.Please choose another name")
-			    return render_template("register.html")		
-        except Team.DoesNotExist:		
-				print("")
-
-        try:
-            if(Team.get(Team.email == team_email)):
-			    flash("The email has been registered.Please choose another email")
-			    return render_template("register.html")		
-        except Team.DoesNotExist:		
-				print("")
+            if(User.get(User.email == user_email)):
+			    flash("该邮箱已被注册")
+			    return render_template("user_register.html")		
+        except User.DoesNotExist:		
+				pass
 				
-        if len(team_name) > 50 or not team_name:
-            flash("You must have a team name!")
-            return render_template("register.html")
+        if len(user_name) > 50 or not user_name:
+            flash("用户名不能为空")
+            return render_template("user_register.html")
 
-        if not (team_email and "." in team_email and "@" in team_email):
-            flash("You must have a valid team email!")
-            return render_template("register.html")
+        if not (user_email and "." in user_email and "@" in user_email):
+            flash("邮箱格式有误")
+            return render_template("user_register.html")
 
-        if not affiliation or len(affiliation) > 100:
-            affiliation = "No affiliation"
 
         #if not email.is_valid_email(team_email):
             #flash("You're lying")
             #return render_template("register.html")
-
-        team_key = misc.generate_team_key()
+			
         confirmation_key = misc.generate_confirmation_key()
-
-        team = Team.create(name=team_name, email=team_email, eligible=team_elig, affiliation=affiliation, key=team_key,
+        pwhash = utils.user.create_password(user_pwd.encode())
+		
+        user = User.create(username=user_name, email=user_email, password=pwhash, 
                            email_confirmation_key=confirmation_key)
-        TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
-        sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
+        sendemail.send_confirmation_email(user_email, confirmation_key)
 
-        session["team_id"] = team.id
-        flash("Team created.")
+        session["user_id"] = user.id
+        flash("注册成功.")
         return redirect(url_for('dashboard'))
 
 @app.route('/logout/')
@@ -167,19 +170,20 @@ def confirm_email():
         flash("Incorrect confirmation key.")
     return redirect(url_for('dashboard'))
 
-@app.route('/team/', methods=["GET", "POST"])
-@decorators.login_required
+@app.route('/user/', methods=["GET", "POST"])
+#@decorators.login_required
 def dashboard():
     if request.method == "GET":
-        team_solves = ChallengeSolve.select(ChallengeSolve, Challenge).join(Challenge).where(ChallengeSolve.team == g.team)
-        team_adjustments = ScoreAdjustment.select().where(ScoreAdjustment.team == g.team)
-        team_score = sum([i.challenge.points for i in team_solves] + [i.value for i in team_adjustments])
-        first_login = False
-        if g.team.first_login:
-            first_login = True
-            g.team.first_login = False
-            g.team.save()
-        return render_template("dashboard.html", team_solves=team_solves, team_adjustments=team_adjustments, team_score=team_score, first_login=first_login)
+        return render_template("dashboard.html")
+        #team_solves = ChallengeSolve.select(ChallengeSolve, Challenge).join(Challenge).where(ChallengeSolve.team == g.team)
+        #team_adjustments = ScoreAdjustment.select().where(ScoreAdjustment.team == g.team)
+        #team_score = sum([i.challenge.points for i in team_solves] + [i.value for i in team_adjustments])
+        #first_login = False
+        #if g.team.first_login:    
+         #   first_login = True
+          #  g.team.first_login = False
+           # g.team.save()
+        #return render_template("dashboard.html", team_solves=team_solves, team_adjustments=team_adjustments, team_score=team_score, first_login=first_login)
 
     elif request.method == "POST":
         if g.redis.get("ul{}".format(session["team_id"])):

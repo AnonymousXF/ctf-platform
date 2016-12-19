@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import config
 from flask import session, redirect, url_for, flash, g, abort
 from functools import wraps
@@ -5,10 +6,10 @@ from functools import wraps
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "team_id" in session and session["team_id"]:
+        if "user_id" in session and session["user_id"]:
             return f(*args, **kwargs)
         else:
-            flash("You need to be logged in to access that page.")
+            flash("你需要先登录.")
             return redirect(url_for('login'))
     return decorated
 

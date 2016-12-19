@@ -44,7 +44,7 @@
                         <ul class="right hide-on-med-and-down">
                             {% if logged_in %}
                             <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                            <li><a href="{{ url_for('dashboard') }}">{{ team.name }}</a></li>
+                            <li><a href="{{ url_for('dashboard') }}">{{ user.name }}</a></li>
                             {% endif %}
                             {% if not logged_in %}
                             {% if config.registration %}
@@ -67,7 +67,7 @@
                             <hr />
                             {% if logged_in %}
                             <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                            <li><a href="{{ url_for('dashboard') }}">{{ team.name }}</a></li>
+                            <li><a href="{{ url_for('dashboard') }}">{{ user.name }}</a></li>
                             {% endif %}
                             {% if not logged_in %}
                             {% if config.registration %}

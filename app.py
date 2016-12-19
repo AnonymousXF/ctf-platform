@@ -5,7 +5,7 @@ from database import Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailu
 from datetime import datetime
 from peewee import fn
 
-from utils import decorators, flag, cache, misc, captcha, email
+from utils import decorators, flag, cache, misc, captcha, sendemail
 import utils.scoreboard
 
 import config
@@ -106,6 +106,20 @@ def register():
         team_elig = "team_eligibility" in request.form
         affiliation = request.form["affiliation"].strip()
 
+        try:
+            if(Team.get(Team.name == team_name)):
+			    flash("The name has existed.Please choose another name")
+			    return render_template("register.html")		
+        except Team.DoesNotExist:		
+				print("")
+
+        try:
+            if(Team.get(Team.email == team_email)):
+			    flash("The email has been registered.Please choose another email")
+			    return render_template("register.html")		
+        except Team.DoesNotExist:		
+				print("")
+				
         if len(team_name) > 50 or not team_name:
             flash("You must have a team name!")
             return render_template("register.html")
@@ -128,7 +142,7 @@ def register():
                            email_confirmation_key=confirmation_key)
         TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
-        email.send_confirmation_email(team_email, confirmation_key, team_key)
+        sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
         session["team_id"] = team.id
         flash("Team created.")

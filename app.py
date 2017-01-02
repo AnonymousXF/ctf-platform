@@ -77,12 +77,13 @@ def login():
 
         try:
             team = Team.get(Team.key == team_key)
-            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+            #for unittest
+            #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
             session["team_id"] = team.id
             flash("Login successful.")
             return redirect(url_for('dashboard'))
         except Team.DoesNotExist:
-            flash("Couldn't find your team. Check your team key.", "error")
+            flash("Couldn not find your team. Check your team key.", "error")
             return render_template("login.html")
 
 @app.route('/register/', methods=["GET", "POST"])
@@ -126,7 +127,8 @@ def register():
 
         team = Team.create(name=team_name, email=team_email, eligible=team_elig, affiliation=affiliation, key=team_key,
                            email_confirmation_key=confirmation_key)
-        TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+        #for unittest
+        #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
         sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
@@ -137,7 +139,7 @@ def register():
 @app.route('/logout/')
 def logout():
     session.pop("team_id")
-    flash("You've successfully logged out.")
+    flash("You have successfully logged out.")
     return redirect(url_for('root'))
 
 # Things that require a team

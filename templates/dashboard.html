@@ -1,3 +1,4 @@
+<!--dashboard.html-->
 {% extends "base.html" %}
 {% block title %}Team Dashboard{% endblock %}
 {% block head %}
@@ -30,13 +31,13 @@
 </style>
 {% endblock %}
 {% block content %}
-<h2>{{ user.name }}</h2>
+<h2>{{ team.name }}</h2>
 <section>
 <div class="row">
     <div class="col s12">
         <div class="card blue darken-1">
             <div class="card-content white-text">
-                <span class="card-title">email_confirmation_key: <code>{{ user.confirmation-key }}</code></span>
+                <span class="card-title">Team key: <code>{{ team.key }}</code></span>
                 <p>Share this with your teammates, and keep it in a safe place. <strong>You need your team key 
                 in order to log in.</strong> If you lose it, an organizer can send it to your team email,
                 which is shown below.</p>
@@ -44,7 +45,7 @@
         </div>
     </div>
 </div>
-{% if not user.email_confirmed %}
+{% if not team.email_confirmed %}
 <div class="row">
     <div class="col s12">
         <div class="card red darken-2">
@@ -65,36 +66,42 @@
     </div>
 </div>
 {% endif %}
-<!--<h4>Team information</h4>
+<h4>Team information</h4>
 <p>Your score is currently {{ team_score }}. <a href="{{ url_for('challenges') }}">Go solve more challenges!</a></p>
 <p>Your team email is <code>{{ team.email }}</code>, and you are affiliated with
 {{ team.affiliation }}.</p>
 <p>Your team is currently marked {{ "eligible" if team.eligible else "ineligible" }}.</p>
 </section>
-<section>-->
+<section>
 <h4>Edit information</h4>
 <form method="POST">
     <div class="input-field">
-        <label for="user-name">用户名</label>
-        <input required maxlength="50" id="user-name" name="user_name" type="text" value="{{ user.name }}" />
+        <label for="team-name">Team Name</label>
+        <input required maxlength="50" id="team-name" name="team_name" type="text" value="{{ team.name }}" />
     </div>
     <div class="input-field">
-        <label for="team-email">用户邮箱</label>
-        <input required id="user-email" name="user_email" type="email" value="{{ user.email }}" />
+        <label for="team-email">Team Email</label>
+        <input required id="team-email" name="team_email" type="email" value="{{ team.email }}" />
     </div>
     <div class="input-field">
-        <input required maxlength="100" id="user-pwd" name="user_pwd" type="password" />
-        <label for="user-pwd">密码（8位及8位以上字母与数字组合）</label>
+        <label for="affiliation">Affiliation</label>
+        <input required maxlength="100" id="affiliation" name="affiliation" type="text" value="{{ team.affiliation }}" />
     </div>
-	<div class="input-field">
-        <input required maxlength="100" id="pwd-confirmed" name="pwd_confirmed" type="password" />
-        <label for="pwd-confirmed">确认密码</label>
-    </div>
+    {% if not team.eligibility_locked %}
+        <p>{{ config.eligibility }}</p>
+        <p>If you do not meet these requirements, you are still welcome to play, but you
+        will not be eligible for prizes. By checking the "Eligibility Certification"
+        checkbox below, you are certifying that you meet the prize eligibility 
+        requirement. We may request appropriate documentation to verify your eligibility
+        status before sending you prizes.</p>
+        <input id="team-eligibility" name="team_eligibility" type="checkbox"{% if team.eligible %} checked="checked"{% endif %}/>
+        <label for="team-eligibility">Eligibility Certification</label>
+    {% endif %}
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
     <br /><br />
-    <button class="btn waves-effect waves-light" type="submit">更新信息</button>
+    <button class="btn waves-effect waves-light" type="submit">Update team</button>
 </form>
-<!--</section>
+</section>
 <section>
 <h4>Score calculation</h4>
 {% if team_solves.count() %}

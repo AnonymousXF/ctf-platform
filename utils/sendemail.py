@@ -21,7 +21,7 @@ def send_email(to, subject, text):
 	server.sendmail(config.email_sender, [to], msg.as_string())
 	server.quit()
 
-def send_confirmation_email(team_email, confirmation_key):
+def send_confirmation_email(team_email, confirmation_key, team_key):
     send_email(team_email, "Welcome to {}!".format(config.ctf_name),
 """Hello, and thanks for registering for {}! Before you can start solving problems,
 you must confirm your email by entering this code into the team dashboard:
@@ -32,7 +32,8 @@ Once you've done that, your account will be enabled, and you will be able to acc
 the challenges. If you have any trouble, feel free to contact an organizer!
 
 If you didn't register an account, then you can disregard this email.
-""".format(config.ctf_name, confirmation_key))
+
+In case you lose it, your team key is: {}""".format(config.ctf_name, confirmation_key, team_key))
 
 def is_valid_email(email):
     return not email.strip().lower().endswith(config.disallowed_domain)

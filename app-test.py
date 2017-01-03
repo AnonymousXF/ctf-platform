@@ -7,7 +7,7 @@ import config
 import re
 
 TEST_NAME = 'unittest'
-TEST_EMAIL = '464059291@qq.co'
+TEST_EMAIL = '464059291@qq.com'
 TEST_AFFILIATION = 'unittest'
 TEST_ELIG = True
 
@@ -85,6 +85,7 @@ class FlaskrTestCase(unittest.TestCase):
 			wrongEmail1 = 'qwerasdf'
 			wrongEmail2 = 'qweradsf.'
 			wrongEmail3 = 'qwerqwasdf@'
+			wrongEmail4 = 'qweradf@tjctf.org'
 			rv = self.register(TEST_NAME,'',TEST_AFFILIATION,TEST_ELIG)
 			self.assertIn(b'You must have a valid team email!',rv[0].data)
 			rv = self.register(TEST_NAME,wrongEmail1,TEST_AFFILIATION,TEST_ELIG)
@@ -93,6 +94,8 @@ class FlaskrTestCase(unittest.TestCase):
 			self.assertIn(b'You must have a valid team email!',rv[0].data)
 			rv = self.register(TEST_NAME,wrongEmail3,TEST_AFFILIATION,TEST_ELIG)
 			self.assertIn(b'You must have a valid team email!',rv[0].data)
+			rv = self.register(TEST_NAME,wrongEmail4,TEST_AFFILIATION,TEST_ELIG)
+			self.assertIn(b'You are lying',rv[0].data)
 
 		else:
 			rv = self.app.get('/register/',follow_redirects=True)

@@ -201,9 +201,9 @@ def dashboard():
         g.redis.set("ul{}".format(session["team_id"]), str(datetime.now()), 120)
 
         if email_changed:
-            if not email.is_valid_email(team_email):
-                flash("You're lying")
-                return redirect(url_for('dashboard'))
+            #if not email.is_valid_email(team_email):
+                #flash("You're lying")
+                #return redirect(url_for('dashboard'))
 
             g.team.email_confirmation_key = misc.generate_confirmation_key()
             g.team.email_confirmed = False

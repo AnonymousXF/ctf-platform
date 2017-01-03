@@ -2,11 +2,12 @@ import unittest
 import os
 from app import app
 from database import *
+import peewee
 import config
 import re
 
 TEST_NAME = 'unittest'
-TEST_EMAIL = '464059291@qq.com'
+TEST_EMAIL = '464059291@qq.co'
 TEST_AFFILIATION = 'unittest'
 TEST_ELIG = True
 
@@ -53,35 +54,45 @@ class FlaskrTestCase(unittest.TestCase):
 					affiliation = affiliation,
 					team_eligibility = team_eligibility,
 					_csrf_token = csrf_token)
-		return self.app.post('/register/',data = data, follow_redirects = True)
+		return self.app.post('/register/',data = data, follow_redirects = True), csrf_token
 
 	#Test Register Function
-	def test_register(self):
+	def test_register_and_confirm_email(self):
 		if config.registration == True:
 			#Correct Register information
-			rv = self.register(TEST_NAME,TEST_EMAIL,TEST_AFFILIATION,TEST_ELIG)
+			rv, csrf_token = self.register(TEST_NAME,TEST_EMAIL,TEST_AFFILIATION,TEST_ELIG)
 			self.assertIn(b'Team created.',rv.data)
+			#Comfirm email
+			teamkey = re.findall(r'<span class="card-title">Team key: <code>(.*)</code></span>',rv.data)[0]
+			confirmation_key = Team.get(Team.key == teamkey).email_confirmation_key
+
+			wrong_data = dict(confirmation_key = confirmation_key+'xxx', _csrf_token = csrf_token)
+			correct_data = dict(confirmation_key = confirmation_key, _csrf_token = csrf_token)
+			rv = self.app.post('/confirm_email/',data = wrong_data, follow_redirects=True)
+			self.assertIn(b'Incorrect confirmation key.',rv.data)
+			rv = self.app.post('/confirm_email/',data = correct_data, follow_redirects=True)
+			self.assertIn(b'Email confirmed!',rv.data)
 
 			#Wrong register information
 			#team_name = NULL or too long
 			longname = 'a'*100
 			rv = self.register('',TEST_EMAIL,TEST_AFFILIATION,TEST_ELIG)
-			self.assertIn(b'You must have a team name!',rv.data)
+			self.assertIn(b'You must have a team name!',rv[0].data)
 			rv = self.register(longname,TEST_EMAIL,TEST_AFFILIATION,TEST_ELIG)
-			self.assertIn(b'You must have a team name!',rv.data)
+			self.assertIn(b'You must have a team name!',rv[0].data)
 
 			#Wrong email format
 			wrongEmail1 = 'qwerasdf'
 			wrongEmail2 = 'qweradsf.'
 			wrongEmail3 = 'qwerqwasdf@'
 			rv = self.register(TEST_NAME,'',TEST_AFFILIATION,TEST_ELIG)
-			self.assertIn(b'You must have a valid team email!',rv.data)
+			self.assertIn(b'You must have a valid team email!',rv[0].data)
 			rv = self.register(TEST_NAME,wrongEmail1,TEST_AFFILIATION,TEST_ELIG)
-			self.assertIn(b'You must have a valid team email!',rv.data)
+			self.assertIn(b'You must have a valid team email!',rv[0].data)
 			rv = self.register(TEST_NAME,wrongEmail2,TEST_AFFILIATION,TEST_ELIG)
-			self.assertIn(b'You must have a valid team email!',rv.data)
+			self.assertIn(b'You must have a valid team email!',rv[0].data)
 			rv = self.register(TEST_NAME,wrongEmail3,TEST_AFFILIATION,TEST_ELIG)
-			self.assertIn(b'You must have a valid team email!',rv.data)
+			self.assertIn(b'You must have a valid team email!',rv[0].data)
 
 		else:
 			rv = self.app.get('/register/',follow_redirects=True)
@@ -100,8 +111,8 @@ class FlaskrTestCase(unittest.TestCase):
 	
 	def test_login_and_logout(self):
 		#register a team
-		html = self.register(TEST_NAME,TEST_EMAIL,TEST_AFFILIATION,TEST_ELIG).data
-		teamkey = re.findall(r'<span class="card-title">Team key: <code>(.*)</code></span>',html)[0]
+		html = self.register(TEST_NAME,TEST_EMAIL,TEST_AFFILIATION,TEST_ELIG)
+		teamkey = re.findall(r'<span class="card-title">Team key: <code>(.*)</code></span>',html[0].data)[0]
 		#Correct teamkey
 		rv = self.login(teamkey)
 		self.assertIn(b'Login successful.', rv.data)

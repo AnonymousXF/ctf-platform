@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*- 
 from flask import Flask, render_template, session, redirect, url_for, request, g, flash, jsonify
 app = Flask(__name__)
 
@@ -68,21 +67,23 @@ def scoreboard():
             return "No scoreboard data available. Please contact an organizer."
 
     return render_template("scoreboard.html", data=data, graphdata=graphdata)
-          
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route('/login/', methods=["GET", "POST"])
 def login():
-    if request.method == 'GET':
+    if request.method == "GET":
         return render_template("login.html")
-    if request.method == 'POST':
+    elif request.method == "POST":
         team_key = request.form["team_key"]
+
         try:
             team = Team.get(Team.key == team_key)
+            #for unittest
             #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
             session["team_id"] = team.id
             flash("Login successful.")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for('dashboard'))
         except Team.DoesNotExist:
-            flash("Could not find your team. Check your team key.")
+            flash("Couldn not find your team. Check your team key.", "error")
             return render_template("login.html")
 
 @app.route('/register/', methods=["GET", "POST"])
@@ -115,19 +116,19 @@ def register():
             return render_template("register.html")
 
         if not affiliation or len(affiliation) > 100:
-            flash("No affiliation")
+            affiliation = "No affiliation"
+
+        if not sendemail.is_valid_email(team_email):
+            flash("You are lying")
             return render_template("register.html")
-            
-        #if not email.is_valid_email(team_email):
-            #flash("You're lying")
-            #return render_template("register.html")
 
         team_key = misc.generate_team_key()
         confirmation_key = misc.generate_confirmation_key()
 
         team = Team.create(name=team_name, email=team_email, eligible=team_elig, affiliation=affiliation, key=team_key,
                            email_confirmation_key=confirmation_key)
-       # TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+        #for unittest
+        #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
         sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
@@ -200,7 +201,7 @@ def dashboard():
         g.redis.set("ul{}".format(session["team_id"]), str(datetime.now()), 120)
 
         if email_changed:
-            if not email.is_valid_email(team_email):
+            if not sendemail.is_valid_email(team_email):
                 flash("You're lying")
                 return redirect(url_for('dashboard'))
 
@@ -361,7 +362,7 @@ def teardown_request(exc):
 
 # CSRF things
 
-#@app.before_request
+@app.before_request
 def csrf_protect():
     csrf_exempt = ['/teamconfirm/']
 

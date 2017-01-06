@@ -11,6 +11,7 @@ tagline = "a cybersecurity competition created by TJHSST students"
 cdn = True
 apisubmit = True
 registration = True
+debug = True
 
 proxied_ip_header = "X-Forwarded-For"
 

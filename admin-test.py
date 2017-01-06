@@ -20,9 +20,8 @@ class BasicTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		os.system('python D:/ctf-platform/ctftool create-tables')
+		os.system('python ctftool create-tables')
 		
-
 	def tearDown(self):
 		tables = [Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
@@ -39,7 +38,7 @@ class FlaskrTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		os.system('python D:/ctf-platform/ctftool create-tables')
+		os.system('python ctftool create-tables')
 
 	def tearDown(self):
 		tables = [Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]

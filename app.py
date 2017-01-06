@@ -77,8 +77,8 @@ def login():
 
         try:
             team = Team.get(Team.key == team_key)
-            #for unittest
-            #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+            if not config.debug:
+                TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
             session["team_id"] = team.id
             flash("Login successful.")
             return redirect(url_for('dashboard'))
@@ -127,8 +127,8 @@ def register():
 
         team = Team.create(name=team_name, email=team_email, eligible=team_elig, affiliation=affiliation, key=team_key,
                            email_confirmation_key=confirmation_key)
-        #for unittest
-        #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+        if not config.debug:
+            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
         sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
@@ -379,4 +379,4 @@ def generate_csrf_token():
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8001)
+    app.run(debug=config.debug, port=8001)

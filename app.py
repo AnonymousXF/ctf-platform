@@ -5,7 +5,7 @@ from database import Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailu
 from datetime import datetime
 from peewee import fn
 
-from utils import decorators, flag, cache, misc, captcha, email
+from utils import decorators, flag, cache, misc, captcha, sendemail
 import utils.scoreboard
 
 import config
@@ -77,12 +77,13 @@ def login():
 
         try:
             team = Team.get(Team.key == team_key)
-            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+            if not config.debug:
+                TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
             session["team_id"] = team.id
             flash("Login successful.")
             return redirect(url_for('dashboard'))
         except Team.DoesNotExist:
-            flash("Couldn't find your team. Check your team key.", "error")
+            flash("Couldn not find your team. Check your team key.", "error")
             return render_template("login.html")
 
 @app.route('/register/', methods=["GET", "POST"])
@@ -117,18 +118,19 @@ def register():
         if not affiliation or len(affiliation) > 100:
             affiliation = "No affiliation"
 
-        #if not email.is_valid_email(team_email):
-            #flash("You're lying")
-            #return render_template("register.html")
+        if not sendemail.is_valid_email(team_email):
+            flash("You are lying")
+            return render_template("register.html")
 
         team_key = misc.generate_team_key()
         confirmation_key = misc.generate_confirmation_key()
 
         team = Team.create(name=team_name, email=team_email, eligible=team_elig, affiliation=affiliation, key=team_key,
                            email_confirmation_key=confirmation_key)
-        TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+        if not config.debug:
+            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
-        email.send_confirmation_email(team_email, confirmation_key, team_key)
+        sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
         session["team_id"] = team.id
         flash("Team created.")
@@ -137,7 +139,7 @@ def register():
 @app.route('/logout/')
 def logout():
     session.pop("team_id")
-    flash("You've successfully logged out.")
+    flash("You have successfully logged out.")
     return redirect(url_for('root'))
 
 # Things that require a team
@@ -199,7 +201,7 @@ def dashboard():
         g.redis.set("ul{}".format(session["team_id"]), str(datetime.now()), 120)
 
         if email_changed:
-            if not email.is_valid_email(team_email):
+            if not sendemail.is_valid_email(team_email):
                 flash("You're lying")
                 return redirect(url_for('dashboard'))
 
@@ -377,4 +379,4 @@ def generate_csrf_token():
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8001)
+    app.run(debug=config.debug, port=8001)

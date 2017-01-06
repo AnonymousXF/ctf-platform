@@ -1,8 +1,25 @@
 import config
-import requests
+from email import encoders
+from email.header import Header
+from email.mime.text import MIMEText
+from email.utils import parseaddr, formataddr
+import smtplib
+
+def _format_addr(s):
+    name, addr = parseaddr(s)
+    return formataddr((Header(name, 'utf-8').encode(), addr))
 
 def send_email(to, subject, text):
-    return requests.post("{}/messages".format(config.secret.mailgun_url), {"from": config.mail_from, "to": to, "subject": subject, "text": text}, auth=("api", config.secret.mailgun_key))
+	msg = MIMEText(text, 'plain', 'utf-8')
+	msg['From'] = _format_addr('<%s>' % config.email_sender)
+	msg['To'] = _format_addr('<%s>' % to)
+	msg['Subject'] = Header(subject, 'utf-8').encode()
+
+	server = smtplib.SMTP(config.email_host, 25)
+	#server.set_debuglevel(1)
+	server.login(config.email_sender, config.email_pass)
+	server.sendmail(config.email_sender, [to], msg.as_string())
+	server.quit()
 
 def send_confirmation_email(team_email, confirmation_key, team_key):
     send_email(team_email, "Welcome to {}!".format(config.ctf_name),

@@ -11,6 +11,7 @@ tagline = "a cybersecurity competition created by TJHSST students"
 cdn = True
 apisubmit = True
 registration = True
+debug = True
 
 proxied_ip_header = "X-Forwarded-For"
 
@@ -19,7 +20,7 @@ teams_on_graph = 10
 
 mail_from = "tjctf@sandbox1431.mailgun.org"
 
-immediate_scoreboard = False
+immediate_scoreboard = True
 
 # IPs that are allowed to confirm teams by posting to /teamconfirm/
 # Useful for verifying resumes and use with resume server.
@@ -39,6 +40,9 @@ resume_server = "https://resumes.tjctf.org"
 
 disallowed_domain = "tjctf.org"
 
+email_sender = 'xf930723@163.com'
+email_pass = 'Leehom251'
+email_host = 'smtp.163.com'
 
 def competition_is_running():
     return competition_begin < datetime.now() < competition_end

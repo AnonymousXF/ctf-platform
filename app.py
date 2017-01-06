@@ -171,7 +171,7 @@ def dashboard():
 
     elif request.method == "POST":
         if g.redis.get("ul{}".format(session["team_id"])):
-            flash("You're changing your information too fast!")
+            flash("You are changing your information too fast!")
             return redirect(url_for('dashboard'))
 
         team_name = request.form["team_name"].strip()
@@ -208,7 +208,7 @@ def dashboard():
             g.team.email_confirmation_key = misc.generate_confirmation_key()
             g.team.email_confirmed = False
 
-            email.send_confirmation_email(team_email, g.team.email_confirmation_key, g.team.key)
+            sendemail.send_confirmation_email(team_email, g.team.email_confirmation_key, g.team.key)
             flash("Changes saved. Please check your email for a new confirmation key.")
         else:
             flash("Changes saved.")

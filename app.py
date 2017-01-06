@@ -77,8 +77,8 @@ def login():
 
         try:
             team = Team.get(Team.key == team_key)
-            #for unittest
-            #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+            if not config.debug:
+                TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
             session["team_id"] = team.id
             flash("Login successful.")
             return redirect(url_for('dashboard'))
@@ -127,8 +127,8 @@ def register():
 
         team = Team.create(name=team_name, email=team_email, eligible=team_elig, affiliation=affiliation, key=team_key,
                            email_confirmation_key=confirmation_key)
-        #for unittest
-        #TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+        if not config.debug:
+            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
 
         sendemail.send_confirmation_email(team_email, confirmation_key, team_key)
 
@@ -171,7 +171,7 @@ def dashboard():
 
     elif request.method == "POST":
         if g.redis.get("ul{}".format(session["team_id"])):
-            flash("You're changing your information too fast!")
+            flash("You are changing your information too fast!")
             return redirect(url_for('dashboard'))
 
         team_name = request.form["team_name"].strip()
@@ -202,13 +202,13 @@ def dashboard():
 
         if email_changed:
             if not sendemail.is_valid_email(team_email):
-                flash("You're lying")
+                flash("You are lying")
                 return redirect(url_for('dashboard'))
 
             g.team.email_confirmation_key = misc.generate_confirmation_key()
             g.team.email_confirmed = False
 
-            email.send_confirmation_email(team_email, g.team.email_confirmation_key, g.team.key)
+            sendemail.send_confirmation_email(team_email, g.team.email_confirmation_key, g.team.key)
             flash("Changes saved. Please check your email for a new confirmation key.")
         else:
             flash("Changes saved.")
@@ -379,4 +379,4 @@ def generate_csrf_token():
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8001)
+    app.run(debug=config.debug, port=8001)

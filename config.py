@@ -43,6 +43,8 @@ email_sender = 'xf930723@163.com'
 email_pass = 'Leehom251'
 email_host = 'smtp.163.com'
 
+debug = True
+
 def competition_is_running():
     return competition_begin < datetime.now() < competition_end
 

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}User Dashboard{% endblock %}
+{% block head %}
+<style type="text/css">
+    section:not(first-child) {
+        margin-top: 15px;
+    }
+    section:last-child {
+        margin-bottom: 30px;
+    }
+    td:last-child, th:last-child {
+        text-align: right;
+    }
+    form {
+        margin-top: 30px;
+        margin-bottom: 25px;
+    }
+    .bigger {
+        font-size: medium;
+    }
+    h4 {
+        font-weight: 400;
+    }
+    th {
+        font-weight: normal;
+    }
+    td, h5 {
+        font-weight: 300;
+    }
+</style>
+{% endblock %}
+{% block content %}
+ <div class="row">
+    <div class="col s12">
+        <div class="card blue darken-1">
+            <div class="card-content white-text">
+                <span class="card-title">{{ user.username }}，欢迎你！</span>
+                {% if user_teamed %}
+                <h4>您属于队伍 ：<strong>{{ team.name }}</strong> 。</h4>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<p></p>
+<p></p>
+{% if not user_teamed %}
+<h2>加入队伍</h2>
+<form action="{{ url_for('team_join') }}" method="POST">
+    <p>请输入您想加入的队伍的名称，申请将会发送给该队伍队长，队长同意后，您即为该队伍的成员</p>
+    <div class="input-field">
+        <input required maxlength="50" id="team-name" name="team_name" type="text" />
+        <label for="team-name">队伍名</label>
+    </div>
+    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+    <button class="btn waves-effect waves-light" type="submit">申请加入</button>
+</form>
+<p></p>
+<p></p>
+<h2>注册队伍</h2>
+<form action="{{ url_for('team_register') }}" method="POST">
+    <div class="input-field">
+        <input required maxlength="50" id="team-name" name="team_name" type="text" />
+        <label for="team-name">队伍名</label>
+    </div>
+    <div class="input-field">
+        <input required maxlength="100" id="affiliation" name="affiliation" type="text" />
+        <label for="affiliation">Affiliation</label>
+    </div>
+    <p>为了有资格获奖, 队伍里的所有成员必须来自高校, 每一队的参赛人员不得多于4人</p>
+    <p>如果您不愿意进行资格认证，我们仍然欢迎您参加比赛，不过您将没有获奖的资格。通过勾选资格认证
+        选项，您将有获奖的资格。不过后续，我们可能会要求您提供相关的文件来确认您的参赛资格。.</p>
+    <input id="team-eligibility" name="team_eligibility" type="checkbox" />
+    <label for="team-eligibility">资格认证</label>
+    <br /><br />
+    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+    <button class="btn waves-effect waves-light" type="submit">创建队伍</button>
+</form>
+{% endif %}
+{% if user_leader %}
+<h2>编辑队伍信息</h2>
+<form action="{{ url_for('team_modify') }}" method="POST">
+    <div class="input-field">
+        <input required maxlength="50" id="team-name" name="team_name" type="text" value="{{ team.name }}" />
+        <label for="team-name">队伍名</label>
+    </div>
+    <div class="input-field">
+        <input required maxlength="100" id="affiliation" name="affiliation" type="text"  value="{{ team.affiliation }}"/>
+        <label for="affiliation">Affiliation</label>
+    </div>
+    {% if not team.eligibility_locked %}
+    <p>为了有资格获奖, 队伍里的所有成员必须来自高校, 每一队的参赛人员不得多于4人</p>
+    <p>如果您不愿意进行资格认证，我们仍然欢迎您参加比赛，不过您将没有获奖的资格。通过勾选资格认证
+        选项，您将有获奖的资格。不过后续，我们可能会要求您提供相关的文件来确认您的参赛资格。.</p>
+    <input id="team-eligibility" name="team_eligibility" type="checkbox" {% if team.eligible %} checked="checked"{% endif %}/>
+    <label for="team-eligibility">资格认证</label>
+    {% endif %}
+    <br /><br />
+    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+    <button class="btn waves-effect waves-light" type="submit">修改队伍</button>
+{% endif %}
+{% if user_teamed %}
+<section>
+<h4>Score calculation</h4>
+{% if team_solves.count() %}
+<h5>Solved problems</h5>
+<div class="row">
+    <div class="col s10 offset-s1">
+        <table>
+            <thead>
+                <tr><th>Name</th><th>Category</th><th>Time</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+                {% for solve in team_solves %}
+                <tr>
+                    <td>{{ solve.challenge.name }}</td>
+                    <td>{{ solve.challenge.category }}</td>
+                    <td><abbr class="time" title="{{ solve.time }}">{{ solve.time }}</abbr></td>
+                    <td>{{ solve.challenge.points }}</td>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<p>No problems have been solved.</p>
+{% endif %}
+{% if team_adjustments.count() %}
+<h5>Score adjustments</h5>
+<div class="row">
+    <div class="col s10 offset-s1">
+        <table>
+            <thead>
+                <tr><th>Reason</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+                {% for adj in team_adjustments %}
+                <tr>
+                    <td>{{ adj.reason }}</td>
+                    <td>{{ adj.value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<p>No score adjustments have been made.</p>
+{% endif %}
+</section>
+
+{% endif %}
+{% endblock %}

@@ -5,18 +5,23 @@ class BaseModel(Model):
     class Meta:
         database = db
 
+class User(BaseModel):
+	username = CharField()
+	password = CharField()
+	email = CharField()
+	email_confirmed = BooleanField(default=False)
+	email_confirmation_key = CharField()		
+		
 class Team(BaseModel):
     name = CharField()
-    email = CharField()
     affiliation = CharField()
     eligible = BooleanField()
     eligibility_locked = BooleanField(default=False)
     first_login = BooleanField(default=True)
-    email_confirmed = BooleanField(default=False)
-    email_confirmation_key = CharField()
     restricts = TextField(default="")
-    key = CharField()
-
+    team_confirmed=BooleanField(default=False)
+    team_leader = ForeignKeyField(User, related_name='leader')
+	
     def solved(self, challenge):
         return ChallengeSolve.select().where(ChallengeSolve.team == self, ChallengeSolve.challenge == challenge).count()
 
@@ -26,6 +31,14 @@ class Team(BaseModel):
         adjust_points = sum([i.value for i in self.adjustments])
         return challenge_points + adjust_points
 
+class TeamMember(BaseModel):
+	team = ForeignKeyField(Team, related_name='members')
+	member = ForeignKeyField(User, related_name='members')		
+	member_confirmed = BooleanField(default=False)
+	class Meta:
+		primary_key=CompositeKey('team', 'member')
+
+	
 class TeamAccess(BaseModel):
     team = ForeignKeyField(Team, related_name='accesses')
     ip = CharField()

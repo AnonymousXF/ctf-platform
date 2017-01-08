@@ -24,7 +24,7 @@ def admin_login():
     elif request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        #two = request.form["two"]
+        two = request.form["two"]
         if getattr(secret, "admin_username", False):
             if username == secret.admin_username and password == secret.admin_password:
                 session["admin"] = username

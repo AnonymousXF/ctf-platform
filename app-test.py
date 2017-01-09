@@ -105,7 +105,7 @@ class FlaskrTestCase(unittest.TestCase):
 			rv = self.app.post('/team/',data = correct_name_data, follow_redirects=True)
 			self.assertIn(b'Changes saved.',rv.data)
 			time.sleep(120)
-			correct_email_data = dict(team_name = TEST_NAME, team_email = 'jjxf251@163.com', affiliation = TEST_AFFILIATION, team_eligibility = TEST_ELIG, _csrf_token =csrf_token)
+			correct_email_data = dict(team_name = TEST_NAME, team_email = '464059291@qq.com', affiliation = TEST_AFFILIATION, team_eligibility = TEST_ELIG, _csrf_token =csrf_token)
 			rv = self.app.post('/team/',data = correct_email_data, follow_redirects=True)
 			self.assertIn(b'Changes saved. Please check your email for a new confirmation key.',rv.data)
 			

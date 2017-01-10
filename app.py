@@ -300,7 +300,7 @@ def team_ticket_detail(ticket):
     try:
         ticket = TroubleTicket.get(TroubleTicket.id == ticket)
     except TroubleTicket.DoesNotExist:
-        flash("Couldn't find ticket #{}.".format(ticket))
+        flash("Could not find ticket #{}.".format(ticket))
         return redirect(url_for("team_tickets"))
 
     if ticket.team != g.team:
@@ -320,7 +320,7 @@ def team_ticket_comment(ticket):
     try:
         ticket = TroubleTicket.get(TroubleTicket.id == ticket)
     except TroubleTicket.DoesNotExist:
-        flash("Couldn't find ticket #{}.".format(ticket))
+        flash("Could not find ticket #{}.".format(ticket))
         return redirect(url_for("team_tickets"))
 
     if ticket.team != g.team:

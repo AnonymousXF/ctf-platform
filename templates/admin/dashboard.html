@@ -3,17 +3,18 @@
 {% if tickets %}
 <div class="card red darken-1">
     <div class="card-content white-text">
-        <span class="card-title">Unresolved issues</span>
-        <p>There are unresolved trouble tickets.</p>
+        <span class="card-title">未解决的问题</span>
+        <p>还有一些未解决的tickets.</p>
     </div>
 </div>
 {% endif %}
+<h4>队伍信息</h4>
 <table class="sortable">
     <thead>
-        <tr><th>Team</th><th>Affiliation</th><th>Eligible</th><th>Last solve</th><th>Score</th></tr>
+        <tr><th>队伍名</th><th>隶属于</th><th>资格认证</th><th>最近一次解题</th><th>分数</th></tr>
     </thead>
     <tbody>
-        {% for team in teams %}
+        {% for team in team_confirmed %}
         <tr>
             <td>
                 <a href="{{ url_for('admin.admin_show_team', tid=team.id) }}">{{ team.name }}</a>
@@ -26,4 +27,43 @@
         {% endfor %}
     </tbody>
 </table>
+<br></br>
+<h4>待审核队伍</h4>
+<form action="{{ url_for('admin.admin_team_add') }}" method="POST">
+<div class="row">
+<div class="col s8 offset-s1">
+<table class="sortable">
+    <thead>
+        <tr><th>队伍名</th><th>队伍队长</th><th>队长邮箱</th><th></th><th></th>
+    </thead>
+    <tbody>
+        {% for team in team_notconfirmed %}
+        {% for leader in team_notconfirmed_leader %}
+        {% if team.team_leader == leader %}
+        <tr>
+            <td>
+                <a href="{{ url_for('admin.admin_show_team', tid=team.id) }}">{{ team.name }}</a>
+            </td>
+            <td>{{ leader.username }}</td>
+            <td>{{ leader.email }}</td>
+            <td>
+                <input name="{{team.name}}" type="checkbox" id="{{team.name}}" />
+                <label for="{{team.name}}">同意</label>    
+            </td>
+            <td>
+                <input name="{{team.id}}" type="checkbox" id="{{team.id}}" />
+                <label for="{{team.id}}">拒绝</label>    
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+<br></br>
+<input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+<button class="btn waves-effect waves-light" type="submit" style="text-align:center;">确定</button>
+</div>
+</div>
+</form>
 {% endblock %}

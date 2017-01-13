@@ -31,21 +31,32 @@ def make_info_available():
 @app.context_processor     #环境处理器,相当于定义全局变量
 def scoreboard_variables():
     var = dict(config=config)
-    var["user_teamed"] = False
+    var["user_teamed"] = False     #user_teamed用户属于某个队伍
+    var["user_requested"] = False   #user_requested用户申请加入某个队伍
+    var["team_requested"] = False   #team_requested用户申请创建某个队伍
     if "user_id" in session:
         var["logged_in"] = True
         var["user"] = g.user
         try:
-            if (TeamMember.get(TeamMember.member == g.user.id)):
+            if (TeamMember.get(TeamMember.member == g.user.id).member_confirmed):
                 var["user_teamed"] = True
         except:
             var["user_teamed"] = False
+        try:
+            if (not TeamMember.get(TeamMember.member == g.user.id).member_confirmed):
+                var["user_requested"] = True
+        except:
+            var["user_requested"] = False
+        try:
+            if (not Team.get(Team.team_leader == g.user.id).team_confirmed):
+                var["team_requested"] = True
+        except:
+            var["team_requested"] = False
     else:
         var["logged_in"] = False
         var["notifications"] = []
 
     if "team_id" in session:
-        var["user_teamed"] = True            #用户属于某个队伍
         g.team = Team.get(Team.id == session["team_id"])
         var["team"] = g.team
         if (g.user.id == g.team.team_leader.id):
@@ -54,7 +65,6 @@ def scoreboard_variables():
             var["user_leader"] = False
         var["notifications"] = Notification.select().where(Notification.team == g.team)
     else:
-       # var["user_teamed"] = False
         var["notifications"] = []
     return var
 
@@ -97,13 +107,16 @@ def login():
         password = request.form["user_pwd"]
         try:
             user = User.get(User.username == username)
-            teammember = TeamMember.get(TeamMember.member == user.id)
             result = utils.user.verify_password(user, password)
             if result:
                 session["user_id"] = user.id
-                session["team_id"] = teammember.team.id
+                try:
+                    teammember = TeamMember.get(TeamMember.member == user.id)
+                    session["team_id"] = teammember.team.id
+                except TeamMember.DoesNotExist:
+                    pass
                 flash("登录成功")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('team_dashboard'))
             else:
                 flash("密码错误")
                 return render_template("login.html")
@@ -173,7 +186,7 @@ def register():
 
         session["user_id"] = user.id
         flash("注册成功.")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('team_dashboard'))
 
 @app.route('/logout/')
 def logout():
@@ -208,23 +221,24 @@ def team_register():
         try:
             if (Team.get(Team.name == team_name)):
                 flash("该队伍名已被占用")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('team_dashboard'))
         except Team.DoesNotExist:
             pass
 
         if len(team_name) > 50 or not team_name:
             flash("您必须有一个队伍名!")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('team_dashboard'))
 
         if not affiliation or len(affiliation) > 100:
             affiliation = "No affiliation"
         team_leader = User.get(User.id == g.user.id)
         team = Team.create(name=team_name, eligible=team_elig, affiliation=affiliation, team_leader=team_leader)
-        TeamMember.create(team=team,member=team_leader,member_confirmed=True)
-        TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+        TeamMember.create(team=team,member=team_leader,member_confirmed=False)
+        if not config.debug:
+            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
         session["team_id"] = team.id
-        flash("队伍创建成功.")
-        return redirect(url_for('dashboard'))
+        flash("队伍申请已提交管理员.")
+        return redirect(url_for('team_dashboard'))
 
 @app.route('/team_modify/', methods=["POST"])
 @decorators.login_required
@@ -239,18 +253,18 @@ def team_modify():
         elig_changed = (team_elig!=g.team.eligible)
         if not name_changed and not affi_changed and not elig_changed:
             flash("您没有修改任何队伍信息！")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('team_dashboard'))
         if name_changed:
             try:
                 if (Team.get(Team.name == team_name)):
                     flash("该队伍名已被占用")
-                    return redirect(url_for('dashboard'))
+                    return redirect(url_for('team_dashboard'))
             except Team.DoesNotExist:
                 pass
 
             if len(team_name) > 50 or not team_name:
                 flash("您必须有一个队伍名!")
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('team_dashboard'))
 
         if affi_changed:
             if not affiliation or len(affiliation) > 100:
@@ -261,23 +275,45 @@ def team_modify():
         g.team.eligible = team_elig
         g.team.save()
         flash("队伍信息修改成功.")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('team_dashboard'))
 
 @app.route('/team_join/', methods=["POST"])
 @decorators.login_required
+@decorators.confirmed_email_required
 def team_join():
     if request.method == "POST":
         team_name = request.form["team_name"].strip()
         try:
             team=Team.get(Team.name == team_name)
-            if team:
+            if not team.team_confirmed:
+                flash("该队伍尚未通过管理员同意，请等待，或加入其它队伍")
+                return redirect(url_for('team_dashboard'))
+            else:
                 TeamMember.create(team=team.id, member=g.user.id)
-                flash("申请已提交给管理员")
-                return redirect(url_for('dashboard'))
+                flash("申请已提交给队长")
+                return redirect(url_for('team_dashboard'))
         except Team.DoesNotExist:
             flash("队伍不存在，请重新输入")
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('team_dashboard'))
 
+@app.route('/user_add/', methods=["POST"])   #审核加入队伍请求
+@decorators.login_required
+@decorators.confirmed_email_required
+def user_add():
+    if request.method == "POST":
+        users = TeamMember.select().where(TeamMember.team == g.team)
+        for i in users:
+            agree = str(i.member.username)
+            reject = str(i.member.id)
+            if agree in request.form and reject in request.form:
+                flash("只能选择一个")
+                return redirect(url_for('team_dashboard'))
+            if agree in request.form:
+                i.member_confirmed = True
+                i.save()
+            if reject in request.form:
+                TeamMember.delete().where(TeamMember.member==i.member).execute()
+        return redirect(url_for('team_dashboard'))
 
 @app.route('/user/', methods=["GET", "POST"])
 #@decorators.login_required
@@ -286,12 +322,13 @@ def dashboard():
         return render_template("dashboard.html")
 
     elif request.method == "POST":
-      #  if g.redis.get("ul{}".format(session["user_id"])):
-      #      flash("您提交的太快了!")
-      #      return redirect(url_for('dashboard'))
+        if g.redis.get("ul{}".format(session["user_id"])):
+            flash("您提交的太快了!")
+            return redirect(url_for('dashboard'))
 
         user_name = request.form["user_name"].strip()
         user_email = request.form["user_email"].strip()
+        team_elig = "team_eligibility" in request.form
         email_changed = (user_email != g.user.email)
         name_changed = (user_name != g.user.username)
         if not email_changed and not name_changed:
@@ -310,6 +347,8 @@ def dashboard():
                 return redirect(url_for('dashboard'))
         g.user.username = user_name
         g.user.email = user_email
+        if not g.team.eligibility_locked:
+            g.team.eligible = team_elig
 
         g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), 120)
 
@@ -351,7 +390,13 @@ def team_dashboard():
                 first_login = True
                 g.team.first_login = False
                 g.team.save()
-            return render_template("team_dashboard.html", team_solves=team_solves, team_adjustments=team_adjustments,
+            if g.team.team_leader.id == g.user.id:
+                team_members = User.select().join(TeamMember).join(Team).where(Team.id == g.team.id)
+                users = TeamMember.select().where(TeamMember.team == g.team)
+                return render_template("team_dashboard.html", team_solves=team_solves, team_adjustments=team_adjustments,
+        team_score=team_score, first_login=first_login, team_members=team_members, users=users)
+            else:
+                return render_template("team_dashboard.html", team_solves=team_solves, team_adjustments=team_adjustments,
         team_score=team_score, first_login=first_login)
         else:
             return render_template("team_dashboard.html")
@@ -508,7 +553,7 @@ def csrf_protect():
     if request.method == "POST":
         token = session.get('_csrf_token', None)
         if (not token or token != request.form["_csrf_token"]) and not request.path in csrf_exempt:
-            return "Invalid CSRF token!"
+            return "非法的CSRF令牌！"
 
 def generate_csrf_token():
     if '_csrf_token' not in session:

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}User Dashboard{% endblock %}
+{% block title %}队伍主界面{% endblock %}
 {% block head %}
 <style type="text/css">
     section:not(first-child) {
@@ -9,7 +9,7 @@
         margin-bottom: 30px;
     }
     td:last-child, th:last-child {
-        text-align: right;
+        text-align: center;
     }
     form {
         margin-top: 30px;
@@ -30,13 +30,16 @@
 </style>
 {% endblock %}
 {% block content %}
- <div class="row">
+<div class="row">
     <div class="col s12">
         <div class="card blue darken-1">
             <div class="card-content white-text">
                 <span class="card-title">{{ user.username }}，欢迎你！</span>
                 {% if user_teamed %}
                 <h4>您属于队伍 ：<strong>{{ team.name }}</strong> 。</h4>
+                {% if user_leader %}
+                <h4>您是该队队长！</h4>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -44,113 +47,227 @@
 </div>
 <p></p>
 <p></p>
-{% if not user_teamed %}
-<h2>加入队伍</h2>
-<form action="{{ url_for('team_join') }}" method="POST">
-    <p>请输入您想加入的队伍的名称，申请将会发送给该队伍队长，队长同意后，您即为该队伍的成员</p>
-    <div class="input-field">
-        <input required maxlength="50" id="team-name" name="team_name" type="text" />
-        <label for="team-name">队伍名</label>
-    </div>
-    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
-    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">申请加入</button>
-</form>
-<p></p>
-<p></p>
-<h2>注册队伍</h2>
-<form action="{{ url_for('team_register') }}" method="POST">
-    <div class="input-field">
-        <input required maxlength="50" id="team-name" name="team_name" type="text" />
-        <label for="team-name">队伍名</label>
-    </div>
-    <div class="input-field">
-        <input required maxlength="100" id="affiliation" name="affiliation" type="text" />
-        <label for="affiliation">Affiliation</label>
-    </div>
-    <p>为了有资格获奖, 队伍里的所有成员必须来自高校, 每一队的参赛人员不得多于4人</p>
-    <p>如果您不愿意进行资格认证，我们仍然欢迎您参加比赛，不过您将没有获奖的资格。通过勾选资格认证
-        选项，您将有获奖的资格。不过后续，我们可能会要求您提供相关的文件来确认您的参赛资格。.</p>
-    <input id="team-eligibility" name="team_eligibility" type="checkbox" />
-    <label for="team-eligibility">资格认证</label>
-    <br /><br />
-    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
-    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">创建队伍</button>
-</form>
-{% endif %}
-{% if user_leader %}
-<h2>编辑队伍信息</h2>
-<form action="{{ url_for('team_modify') }}" method="POST">
-    <div class="input-field">
-        <input required maxlength="50" id="team-name" name="team_name" type="text" value="{{ team.name }}" />
-        <label for="team-name">队伍名</label>
-    </div>
-    <div class="input-field">
-        <input required maxlength="100" id="affiliation" name="affiliation" type="text"  value="{{ team.affiliation }}"/>
-        <label for="affiliation">Affiliation</label>
-    </div>
-    {% if not team.eligibility_locked %}
-    <p>为了有资格获奖, 队伍里的所有成员必须来自高校, 每一队的参赛人员不得多于4人</p>
-    <p>如果您不愿意进行资格认证，我们仍然欢迎您参加比赛，不过您将没有获奖的资格。通过勾选资格认证
-        选项，您将有获奖的资格。不过后续，我们可能会要求您提供相关的文件来确认您的参赛资格。.</p>
-    <input id="team-eligibility" name="team_eligibility" type="checkbox" {% if team.eligible %} checked="checked"{% endif %}/>
-    <label for="team-eligibility">资格认证</label>
-    {% endif %}
-    <br /><br />
-    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
-    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">修改队伍</button>
-{% endif %}
-{% if user_teamed %}
-<section>
-<h4>Score calculation</h4>
-{% if team_solves.count() %}
-<h5>Solved problems</h5>
-<div class="row">
-    <div class="col s10 offset-s1">
-        <table>
-            <thead>
-                <tr><th>Name</th><th>Category</th><th>Time</th><th>Value</th></tr>
-            </thead>
-            <tbody>
-                {% for solve in team_solves %}
-                <tr>
-                    <td>{{ solve.challenge.name }}</td>
-                    <td>{{ solve.challenge.category }}</td>
-                    <td><abbr class="time" title="{{ solve.time }}">{{ solve.time }}</abbr></td>
-                    <td>{{ solve.challenge.points }}</td>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% else %}
-<p>No problems have been solved.</p>
-{% endif %}
-{% if team_adjustments.count() %}
-<h5>Score adjustments</h5>
-<div class="row">
-    <div class="col s10 offset-s1">
-        <table>
-            <thead>
-                <tr><th>Reason</th><th>Value</th></tr>
-            </thead>
-            <tbody>
-                {% for adj in team_adjustments %}
-                <tr>
-                    <td>{{ adj.reason }}</td>
-                    <td>{{ adj.value }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% else %}
-<p>No score adjustments have been made.</p>
-{% endif %}
-</section>
 
+{% if user_requested and team_requested%}
+<div class="row">
+    <div class="col s12">
+        <div class="card blue darken-1">
+            <div class="card-content white-text">
+                {% if team_requested %}
+                    <span class="card-title">您的创建队伍请求已发送给管理员，请等待管理员审核！</span>
+                {% else %}
+                    <span class="card-title">您的加入队伍请求已发送给队长，请等待队长审核！</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<p></p>
+<p></p>
+
+{% else %}
+<ul class="collapsible popout" data-collapsible="expandable">
+    {% if not user_teamed %}
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>加入队伍</div>
+        <div class="collapsible-body">
+                <form action="{{ url_for('team_join') }}" method="POST">
+                    <p>请输入您想加入的队伍的名称，申请将会发送给该队伍队长，队长同意后，您即为该队伍的成员</p>
+                    <div class="input-field">
+                    <input required maxlength="50" id="team-name" name="team_name" type="text" />
+                    <label for="team-name">队伍名</label>
+                    </div>
+                    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+                    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+                    <button class="btn waves-effect waves-light" type="submit">申请加入</button>
+                </form>
+        </div>
+    </li>
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>注册队伍</div>
+        <div class="collapsible-body">
+            <form action="{{ url_for('team_register') }}" method="POST">
+                <div class="input-field">
+                <input required maxlength="50" id="team-name" name="team_name" type="text" />
+                <label for="team-name">队伍名</label>
+                </div>
+                <div class="input-field">
+            <input required maxlength="100" id="affiliation" name="affiliation" type="text" />
+            <label for="affiliation">Affiliation</label>
+                </div>
+                <p>为了有资格获奖, 队伍里的所有成员必须来自高校, 每一队的参赛人员不得多于4人</p>
+                <p>如果您不愿意进行资格认证，我们仍然欢迎您参加比赛，不过您将没有获奖的资格。通过勾选资格认证
+                选项，您将有获奖的资格。不过后续，我们可能会要求您提供相关的文件来确认您的参赛资格。.</p>
+                <input id="team-eligibility" name="team_eligibility" type="checkbox" />
+                <label for="team-eligibility">资格认证</label>
+                <br /><br />
+                <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+                <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+                <button class="btn waves-effect waves-light" type="submit">创建队伍</button>
+            </form>
+       </div>
+    </li>
+    {% endif %}
+    {% if user_leader %}
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>队伍成员</div>
+        <div class="collapsible-body">
+            <div class="row">
+                <div class="col s6 offset-s1">
+                    <table class="centered">
+                    <thead>
+                        <tr>
+                        <th>成员名</th>
+                        <th>成员邮箱</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for team_member in team_members %}
+                    {% for i in users %}
+                    {% if i.member == team_member and i.member_confirmed %}
+                        <tr>
+                        <td>{{team_member.username}}</td>
+                        <td>{{team_member.email}}</td>
+                        </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+       </div>
+    </li>
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>待审核成员</div>
+        <div class="collapsible-body">
+            <form action="{{ url_for('user_add') }}" method="POST">
+            <div class="row">
+            <div class="col s6 offset-s1">
+                <table>
+                <thead>
+                    <tr>
+                    <th>申请成员名</th>
+                    <th>申请成员邮箱</th>
+                    <th></th>
+                    <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for team_member in team_members %}
+                {% for i in users %}
+                {% if i.member == team_member and not i.member_confirmed %}
+                    <tr>
+                    <td>{{team_member.username}}</td>
+                    <td>{{team_member.email}}</td>
+                    <td>
+                        <input name="{{team_member.username}}" type="checkbox" id="{{team_member.username}}" />
+                        <label for="{{team_member.username}}">同意</label>
+                    </td>
+                    <td>
+                        <input name="{{team_member.id}}" type="checkbox" id="{{team_member.id}}" />
+                        <label for="{{team_member.id}}">拒绝</label>
+                    </td>
+                    </tr>
+                {% endif %}
+                {% endfor %}
+                {% endfor %}
+                </tbody>
+                </table>
+                <br></br>
+                <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+                <button class="btn waves-effect waves-light" type="submit" style="text-align:center;">确定</button>
+            </div>
+            </div>
+            </form>
+        </div>
+    </li>
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>编辑队伍信息</div>
+        <div class="collapsible-body">
+            <form action="{{ url_for('team_modify') }}" method="POST">
+                <div class="row">
+                    <div class="input-field col s6">
+                    <div class="input-field">
+                        <input required maxlength="50" style="text-valign:middle" id="team-name" name="team_name" type="text" value="   {{ team.name }}" />
+                        <label for="team-name" style="text-valign:middle">队伍名</label>
+                    </div>
+                    <div class="input-field">
+                        <input required maxlength="100" id="affiliation" name="affiliation" type="text"  value="   {{ team.affiliation }}"/>
+                        <label for="affiliation">Affiliation</label>
+                    </div>
+                    </div>
+                    </div>
+                    {% if not team.eligibility_locked %}
+                        <p>为了有资格获奖, 队伍里的所有成员必须来自高校, 每一队的参赛人员不得多于4人</p>
+                        <p>如果您不愿意进行资格认证，我们仍然欢迎您参加比赛，不过您将没有获奖的资格。通过勾选资格认证
+                        选项，您将有获奖的资格。不过后续，我们可能会要求您提供相关的文件来确认您的参赛资格。.</p>
+                        <input id="team-eligibility" name="team_eligibility" type="checkbox" {% if team.eligible %} checked="checked"{% endif %}/>
+                        <label for="team-eligibility">资格认证</label>
+                    {% endif %}
+                    <br /><br />
+                    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+                    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+                    <div align="center"><button class="btn waves-effect waves-light" type="submit">修改队伍</button></div>
+            </form>
+       </div>
+    </li>
+    {% endif %}
+    {% if user_teamed %}
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>队伍解决的题目</div>
+        <div class="collapsible-body">
+            {% if team_solves.count() %}
+                <div class="row">
+                <div class="col s10 offset-s1">
+                    <table>
+                    <thead>
+                        <tr><th>题目名称</th><th>题目类型</th><th>解决时间</th><th>分值</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for solve in team_solves %}
+                        <tr>
+                        <td>{{ solve.challenge.name }}</td>
+                        <td>{{ solve.challenge.category }}</td>
+                        <td><abbr class="time" title="{{ solve.time }}">{{ solve.time }}</abbr></td>
+                        <td>{{ solve.challenge.points }}</td>
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+            {% else %}
+                <p>没有做出任何题目.</p>
+            {% endif %}
+        </div>
+    </li>
+    <li>
+        <div class="collapsible-header"><i class="mdi-social-whatshot"></i>队伍的分数调整</div>
+        <div class="collapsible-body">
+            {% if team_adjustments.count() %}
+                <div class="row">
+                <div class="col s10 offset-s1">   
+                    <table>
+                    <thead>
+                        <tr><th>原因</th><th>分值</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for adj in team_adjustments %}
+                        <tr>
+                        <td>{{ adj.reason }}</td>
+                        <td>{{ adj.value }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            </div>
+            {% else %}
+                <p>没有任何分数调整.</p>
+            {% endif %}
+        </div>
+    </li>
+    {% endif %}
+</ul>
 {% endif %}
 {% endblock %}

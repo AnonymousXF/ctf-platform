@@ -12,11 +12,11 @@
 <form action="{{ url_for('admin.admin_ticket_comment', ticket=ticket.id) }}" method="POST">
     <div class="input-field">
         <textarea id="comment" name="comment" class="materialize-textarea"></textarea>
-        <label for="comment">Comment</label>
+        <label for="comment">评论</label>
     </div>
     <input id="resolved" name="resolved" type="checkbox" {% if not ticket.active %}checked="checked"{% endif %} />
-    <label for="resolved">Mark resolved</label><br /><br />
+    <label for="resolved">标记以解决</label><br /><br />
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">Update ticket</button>
+    <button class="btn waves-effect waves-light" type="submit">更新ticket</button>
 </form>
 {% endblock %}

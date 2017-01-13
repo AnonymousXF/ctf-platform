@@ -1,21 +1,21 @@
 {% extends "admin/base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}登录{% endblock %}
 {% block content %}
-<h2>Login</h2>
+<h2>登录</h2>
 <form method="POST">
     <div class="input-field">
         <input id="username" name="username" type="text" />
-        <label for="username">Username</label>
+        <label for="username">用户名</label>
     </div>
     <div class="input-field">
         <input id="password" name="password" type="password" />
-        <label for="password">Password</label>
+        <label for="password">密码</label>
     </div>
-    <div class="input-field">
+   <!--  <div class="input-field">
         <input id="two" name="two" type="text" />
         <label for="two">2FA</label>
-    </div>
+    </div> -->
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">Login</button>
+    <button class="btn waves-effect waves-light" type="submit">登录</button>
 </form>
 {% endblock %}

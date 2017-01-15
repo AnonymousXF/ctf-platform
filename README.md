@@ -1,12 +1,5 @@
-# Flagbase
-This is the platform for TJCTF. It's (what I think is) the best of the MITRE,
-CTFd, and picoCTF platforms rolled up into a Flask application.
-
-I'm bad at naming things.
-
-## Installation
-You're going to want to edit `config.py`. The variable names should be fairly
-self-explanatory.
+## 安装说明
+根据需求编辑 `config.py`， 文件中包括了CTF比赛的名称、注册功能的开启/关闭、比赛的开始和结束时间、邮箱SMTP服务的账号和密码等配置信息。
 
 You're going to want to create a file called `secrets`. It will look like this:
 
@@ -18,10 +11,9 @@ recaptcha_secret: sdakjfhsdalkfjhsdalkfjh
 key: this can be anything you want, it is your flask secret_key
 ```
 
-You should edit line 2 of database.py, unless you want to use SQLite. This uses
-Peewee, so you can use any Peewee-supported database.
+可以编辑`database.py`中第2行来更改使用的数据库，默认使用的是SQLite。连接数据库使用的ORM框架为`peewee` ，只要`peewee`支持的数据库都能使用。
 
-You can create some problem YAML files that look like this:
+可以通过YAML文件来导入题目，示例如下：
 
 ```yml
 name: Problem Name
@@ -32,16 +24,14 @@ points: 250
 flag: "flag{whatever}"
 ```
 
-Then add them with `./ctftool add-challenge problem.yml` and it'll get put in the
+然后使用ctftool，输入参数`./ctftool add-challenge problem.yml` ，然后题目信息就会被导入数据库。
 database.
 
-Run `python app.py` and you have a server running. You probably want to deploy
-it with `gunicorn` or similar, long-term.
+运行 `python app.py` ，CTF平台即可运行。 可以用gunicorn或类似工具部署网站。
 
 ## ctftool
 
-You can do some really fancy stuff with `ctftool`. If you have a directory structure
-like this:
+可以使用 `ctftool`做一些操作，例如：添加题目，添加队伍，添加管理员等。 如果目录结构如下所示：
 
 - ctf-platform
 - ctf-problems
@@ -55,30 +45,10 @@ like this:
         - problem.yml
     - problem4
 
-You can run `./ctftool scan ../ctf-problems/` and get a fully populated database
-with information from all the problem.yml files, and automatically generated
-static file names, and automatic substitutions for static file links in
-problem.yml. More documentation on this to come soon.
+可以执行命令 `./ctftool scan ../ctf-problems/` 可以批量地将yaml文件中的题目信息导入数据库， 自动的生成静态文件名称，并自动那个替换yaml文件中静态文件的链接。
 
-## Contributing
+## 可能会遇到的问题
 
-Flagbase is under really heavy development right now. That means
-
-- **Absolutely do** submit issues: bugs and feature requests are awesome.
-
-- **Don't** submit a pull request for:
-    - a major feature addition
-    - database model changes
-
-- **Do** submit pull requests for:
-    - documentation addition/edits
-    - minor bugfixes
-    - small changes to existing features
-
-If you're touching `database.py` or `config.py`, you're probably doing it wrong.
-
-If you decide to ignore my guidelines, **write detailed documentation** on what your
-pull request consists of, what problems it fixes, how it works, and what issues
-it could bring up.
-
-Of course, you are more than welcome to fork the repository.
+* 之前尝试在ubuntu 14.04中安装，在安装模块peewee时总是出现问题，安装成功后程序仍然显示无法识别peewee模块；在ubuntu 16.04中安装正常。
+* 需要安装redis服务。
+* windows平台和linux平台都可以运行。

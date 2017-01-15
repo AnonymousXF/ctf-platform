@@ -1,16 +1,6 @@
 ## 安装说明
 根据需求编辑 `config.py`， 文件中包括了CTF比赛的名称、注册功能的开启/关闭、比赛的开始和结束时间、邮箱SMTP服务的账号和密码等配置信息。
 
-You're going to want to create a file called `secrets`. It will look like this:
-
-```yml
-mailgun_url: https://api.mailgun.net/v3/tjctf.org
-mailgun_key: key-asdflkjasdhflkjsdahflkhsdaklfjhasd
-recaptcha_key: asdlkfjhasdlkjfhlsdakjfh
-recaptcha_secret: sdakjfhsdalkfjhsdalkfjh
-key: this can be anything you want, it is your flask secret_key
-```
-
 可以编辑`database.py`中第2行来更改使用的数据库，默认使用的是SQLite。连接数据库使用的ORM框架为`peewee` ，只要`peewee`支持的数据库都能使用。
 
 可以通过YAML文件来导入题目，示例如下：

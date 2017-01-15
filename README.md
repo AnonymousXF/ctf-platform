@@ -15,7 +15,6 @@ flag: "flag{whatever}"
 ```
 
 然后使用ctftool，输入参数`./ctftool add-challenge problem.yml` ，然后题目信息就会被导入数据库。
-database.
 
 运行 `python app.py` ，CTF平台即可运行。 可以用gunicorn或类似工具部署网站。
 

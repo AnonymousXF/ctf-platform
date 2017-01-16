@@ -70,13 +70,12 @@ class FlaskrTestCase(unittest.TestCase):
 					pwd_confirmed = pwd_confirmed,
 					_csrf_token = csrf_token)
 		return self.app.post('/register/',data = data, follow_redirects = True), csrf_token
-
+	
 	#Test Register Function
 	def test_register_and_confirm_email_and_update_information(self):
 		if config.registration == True:
 			#Correct Register information----/register/
 			rv, csrf_token = self.register(USER_NAME,USER_EMAIL,USER_PASSWORD,USER_PASSWORD)
-			print(rv.data)
 			self.assertIn(b'register successfully.',rv.data)
 			#Comfirm email----/confirm_email/
 			confirmation_key = User.get(User.username == USER_NAME).email_confirmation_key

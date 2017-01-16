@@ -16,7 +16,7 @@ proxied_ip_header = "X-Forwarded-For"
 
 flag_rl = 5
 teams_on_graph = 10
-
+team_members = 4
 mail_from = "tjctf@sandbox1431.mailgun.org"
 
 immediate_scoreboard = True

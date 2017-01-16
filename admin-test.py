@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 import os
 from app import app
@@ -10,6 +11,7 @@ from datetime import datetime
 import random
 import utils.admin
 
+config.debug=True
 TEST_ADMIN_NAME = 'nana'
 TEST_ADMIN_PASSWORD = 'nana'
 r = random.SystemRandom()
@@ -22,8 +24,9 @@ class BasicTestCase(unittest.TestCase):
 		self.app = app.test_client()
 		os.system('python ctftool create-tables')
 		
+
 	def tearDown(self):
-		tables = [Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 
 	def test_index(self):
@@ -41,7 +44,7 @@ class FlaskrTestCase(unittest.TestCase):
 		os.system('python ctftool create-tables')
 
 	def tearDown(self):
-		tables = [Team, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 
 	def login(self, username, password):
@@ -62,7 +65,7 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
 		self.assertIn(TEST_ADMIN_NAME, rv.data)
 		rv = self.logout()
-		self.assertIn(b'Login',rv.data)
+		self.assertIn(b'登录',rv.data)
 		#Wrong data
 		rv = self.login('', '')
 		self.assertIn(b'You have made a terrible mistake.', rv.data)
@@ -79,14 +82,41 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
 		self.assertIn(TEST_ADMIN_NAME, rv.data)
 		rv = self.app.get('/admin/dashboard/',follow_redirects = True)
-		self.assertIn('Score', rv.data)
+		print(rv.data)
+		self.assertIn('待审核队伍', rv.data)
+
+	#test /team_add/
+	def test_team_add(self):
+		# register a team
+		User.create(username='user', password=pwhash, email='357989@qq.com', email_confirmation_key='12345678956565', email_confirmed=True)
+		html = self.app.get('/login/',follow_redirects=True).data
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
+		data = dict(user_name = 'user', user_pwd = 'nana', _csrf_token = csrf_token)
+		rv = self.app.post('/login/',data = data,follow_redirects=True)
+		print(rv.data)
+		data = dict(team_name = 'test',
+					affiliation = 'hust',
+					team_eligibility = True,
+					_csrf_token = csrf_token)
+		rv = self.app.post('/team_register/',data = data, follow_redirects = True)
+		self.assertIn(b'The request has send to admin.',rv.data)
+		self.app.get('/logout/',follow_redirects = True)
+		# admin add the team
+		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
+		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		print(rv.data)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/admin/team_add/', data=dict(test='checked', _csrf_token=csrf_token), follow_redirects = True)
+		self.assertIn(b'agree',rv.data)
 
 	def test_login_tickets(self):
 		# create admin
 		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
 		# create a team
-		team = Team.create(name='test_team', email='358693294@qq.com', eligible=True, affiliation='Hust', key='tjctf_87rfu0nwhtk0a5nc6tnzx5z8eoyr9hxu',
-                            email_confirmation_key='6b654twftg4vjzpl8zzpw6y0g5ilh08ti2ytczo323ajmua7')
+		User.create(username='nana', password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		user = User.get(User.username=='nana')
+		team = Team.create(name='test1', affiliation='hust', eligible=True, team_leader=user)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
 		# create a ticket
 		opened_at = datetime.now()
 		ticket = TroubleTicket.create(team=team, summary='test ticket', description='test test test', opened_at=opened_at)
@@ -153,19 +183,15 @@ class FlaskrTestCase(unittest.TestCase):
 		# create admin
 		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
 		#create a team
-		team = Team.create(name='test_team', email='358693294@qq.com', eligible=True, affiliation='Hust', key='tjctf_87rfu0nwhtk0a5nc6tnzx5z8eoyr9hxu',
-                            email_confirmation_key='6b654twftg4vjzpl8zzpw6y0g5ilh08ti2ytczo323ajmua7')
+		User.create(username='nana', password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		user = User.get(User.username=='nana')
+		team = Team.create(name='test1', affiliation='hust', eligible=True, team_leader=user)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
 		# not login
 		# test /team/<int:tid>/
 		rv = self.app.get('/admin/team/1/', follow_redirects = True)
 		self.assertIn('You must be an admin to access that page.', rv.data)
 		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
-		# test /team/<int:tid>/<csrf>/impersonate/
-		rv = self.app.get('/admin/team/1/'+csrf+'/impersonate/', follow_redirects = True)
-		self.assertIn('You must be an admin to access that page.', rv.data)
-		# test /team/<int:tid>/<csrf>/toggle_eligibility/
-		rv = self.app.get('/admin/team/1/'+csrf+'/impersonate/', follow_redirects = True)
-		self.assertIn('You must be an admin to access that page.', rv.data)
 		# test /team/<int:tid>/<csrf>/toggle_eligibility_lock/
 		rv = self.app.get('/admin/team/1/'+csrf+'/toggle_eligibility_lock/', follow_redirects = True)
 		self.assertIn('You must be an admin to access that page.', rv.data)
@@ -177,13 +203,11 @@ class FlaskrTestCase(unittest.TestCase):
 			if team:
 				# test /team/<int:tid>/
 				rv = self.app.get('/admin/team/'+str(team.id)+'/', follow_redirects = True)
-				csrf = re.findall(r'<a href="/admin/team/1/(.*)/impersonate/">Impersonate team</a><br />',rv.data)[0]
-				self.assertIn('Score adjustment', rv.data)
-				# test /team/<int:tid>/<csrf>/impersonate/
-				rv = self.app.get('/admin/team/'+str(team.id)+'/'+csrf+'/impersonate/', follow_redirects = True)
-				self.assertIn('Score progression', rv.data)
+				#csrf = re.findall(r'<a href="/admin/team/1/(.*))/toggle_eligibility/">',rv.data)[0]
+				self.assertIn('计算分数', rv.data)
 				# test /team/<int:tid>/<csrf>/toggle_eligibility/
 				rv = self.app.get('/admin/team/'+str(team.id)+'/'+csrf+'/toggle_eligibility/', follow_redirects = True)
+				print(rv.data)
 				self.assertIn('Eligibility set to', rv.data)
 				# test /team/<int:tid>/<csrf>/toggle_eligibility_lock/
 				rv = self.app.get('/admin/team/'+str(team.id)+'/'+csrf+'/toggle_eligibility_lock/', follow_redirects = True)

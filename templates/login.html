@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}登录{% endblock %}
 {% block head %}
 <style>
     body {
@@ -27,7 +27,8 @@
                         <label for="user-pwd">密码</label>
                         <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit">Login</button>
+                    <button class="btn waves-effect waves-light" type="submit">登录</button>
+                    <a href="{{ url_for('forget_pwd') }}">.....忘记密码？</a>
                 </form>
             </div>
         </div>

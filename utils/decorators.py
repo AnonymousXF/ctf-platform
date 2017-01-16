@@ -18,7 +18,7 @@ def must_be_allowed_to(thing):
         @wraps(f)
         def decorated(*args, **kwargs):
             if "team_id" not in session:
-                flash("请先加入队伍")
+                flash("Please join a team!")
                 return redirect(url_for('dashboard'))
             if getattr(g, 'team_restricts', None) is None:
                 return redirect(url_for('login'))
@@ -34,12 +34,12 @@ def confirmed_email_required(f):
     def decorated(*args, **kwargs):
         if "user_id" in session and session["user_id"]:
             if not g.user.email_confirmed:
-                flash("请先进行邮箱确认.")
+                flash("Please confirm your email.")
                 return redirect(url_for('dashboard'))
             else:
                 return f(*args, **kwargs)
         else:
-            flash("您想要先登录.")
+            flash("Need login first.")
             return redirect(url_for('login'))
     return decorated
 

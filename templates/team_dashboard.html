@@ -53,11 +53,7 @@
     <div class="col s12">
         <div class="card blue darken-1">
             <div class="card-content white-text">
-                {% if team_requested %}
-                    <span class="card-title">您的创建队伍请求已发送给管理员，请等待管理员审核！</span>
-                {% else %}
-                    <span class="card-title">您的加入队伍请求已发送给队长，请等待队长审核！</span>
-                {% endif %}
+                <span class="card-title">您的创建队伍请求已发送给管理员，请等待管理员审核！</span>
             </div>
         </div>
     </div>
@@ -65,6 +61,19 @@
 <p></p>
 <p></p>
 
+{% else %}
+{% if user_requested %}
+    <div class="row">
+    <div class="col s12">
+        <div class="card blue darken-1">
+            <div class="card-content white-text">
+                <span class="card-title">您的创建队伍请求已发送给队长，请等待队长审核！</span>
+            </div>
+        </div>
+    </div>
+    </div>
+    <p></p>
+    <p></p>
 {% else %}
 <ul class="collapsible popout" data-collapsible="expandable">
     {% if not user_teamed %}
@@ -269,5 +278,6 @@
     </li>
     {% endif %}
 </ul>
+{% endif %}
 {% endif %}
 {% endblock %}

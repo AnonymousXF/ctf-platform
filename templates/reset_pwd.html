@@ -1,20 +1,11 @@
 {% extends "base.html" %}
-{% block title %}注册{% endblock %}
+{% block title %}修改密码{% endblock %}
 {% block head %}
 <!--<script src='https://www.google.com/recaptcha/api.js'></script>-->
 {% endblock %}
 {% block content %}
-<h3>注册新用户</h3>
-<p>注册完成后，可以选择加入队伍，或创建新队伍</p>
-<form method="POST">
-    <div class="input-field">
-        <input required maxlength="50" id="user-name" name="user_name" type="text" />
-        <label for="user-name">用户名</label>
-    </div>
-    <div class="input-field">
-        <input required id="user-email" name="user_email" type="email" />
-        <label for="user-email">邮箱</label>
-    </div>
+<h3>修改密码</h3>
+<form action="{{ url_for('reset_pwd') }}" method="POST">
     <div class="input-field">
         <input required maxlength="100" id="user-pwd" name="user_pwd" type="password" />
         <label for="user-pwd">密码（8位及8位以上字母与数字组合）</label>
@@ -26,6 +17,6 @@
     <br /><br />
     <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">注册</button>
+    <button class="btn waves-effect waves-light" type="submit">修改</button>
 </form>
 {% endblock %}

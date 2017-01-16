@@ -79,9 +79,9 @@ app.register_blueprint(admin.admin)
 def root():
     return redirect(url_for('scoreboard'))
 
-@app.route('/chat/')
-def chat():
-    return render_template("chat.html")
+# @app.route('/chat/')
+# def chat():
+#     return render_template("chat.html")
 
 @app.route('/scoreboard/')
 def scoreboard():
@@ -115,14 +115,73 @@ def login():
                     session["team_id"] = teammember.team.id
                 except TeamMember.DoesNotExist:
                     pass
-                flash("登录成功")
+                flash("Login successful.")
                 return redirect(url_for('team_dashboard'))
             else:
-                flash("密码错误")
+                flash("Wrong pwd!")
                 return render_template("login.html")
         except User.DoesNotExist:
-            flash("用户不存在，请检查用户名密码，重新输入")
+            flash("Not exist!")
             return render_template("login.html")
+
+@app.route('/forget_pwd/', methods=["GET", "POST"])
+def forget_pwd():
+    if request.method == "GET":
+        return render_template("forget_pwd.html")
+    if request.method == "POST":
+        user_name =request.form['user_name']
+        try:
+            user = User.get(User.username==user_name)
+            if user.email_confirmed:
+                confirmation_key = misc.generate_confirmation_key()
+                #sendemail.send_confirmation_email(user.email, confirmation_key)
+                user.email_confirmation_key = confirmation_key
+                user.save()
+                flash("验证码已发送到邮箱")
+                return render_template("forget_pwd.html")
+            else:
+                flash("对不起，您的邮箱尚未进行认证。你可以重新注册一个账号")
+                return render_template("user_register.html")
+        except User.DoesNotExist:
+            flash("用户名不存在")
+            return render_template("forget_pwd.html")
+
+@app.route('/confirm_code/', methods=["POST"])
+def confirm_code():
+    if request.method == "POST":
+        user_name = request.form['user_name1']
+        confirm_code = request.form['confirm_code']
+        try:
+            user = User.get(User.username==user_name)
+            if user.email_confirmation_key==confirm_code:
+                flash("验证码正确")
+                session['user_id'] = user.id
+                g.user = user
+                return render_template("reset_pwd.html")
+            else:
+                flash("验证码错误")
+                return render_template("forget_pwd.html")
+        except User.DoesNotExist:
+            flash("用户名错误")
+            return render_template("forget_pwd.html")
+
+@app.route('/reset_pwd/',methods=["POST"])
+def reset_pwd():
+    if request.method == "POST":
+        user_pwd = request.form["user_pwd"].strip()
+        pwd_confirmed = request.form["pwd_confirmed"].strip()
+        user = User.get(User.username==g.user.username)
+        if not user_pwd ==pwd_confirmed:
+            flash("2次密码不一致")
+            return render_template("reset_pwd.html")
+        if not utils.user.check_Password(user_pwd):
+            flash("wrong pwd format.")
+            return render_template("reset_pwd.html")
+        pwhash = utils.user.create_password(user_pwd.encode())
+        g.user.password = pwhash
+        g.user.save()
+        flash("密码修改成功")
+        return redirect(url_for('login'))
 
 @app.route('/register/', methods=["GET", "POST"])
 def register():
@@ -146,35 +205,35 @@ def register():
         pwd_confirmed = request.form["pwd_confirmed"].strip()
 
         if not utils.user.check_Password(user_pwd):
-            flash("密码需为8位及8位以上的字母与数字组合")
+            flash("wrong pwd format.")
             return render_template("user_register.html")
 		
         try:
             if(User.get(User.username == user_name)):
-			    flash("该用户名已被占用")
+			    flash("The name has been used!")
 			    return render_template("user_register.html")		
         except User.DoesNotExist:		
 				pass
 
         try:
             if(User.get(User.email == user_email)):
-			    flash("该邮箱已被注册")
+			    flash("The email has been used!")
 			    return render_template("user_register.html")		
         except User.DoesNotExist:		
 				pass
 				
         if len(user_name) > 50 or not user_name:
-            flash("用户名不能为空")
+            flash("wrong name format.")
             return render_template("user_register.html")
 
         if not (user_email and "." in user_email and "@" in user_email):
-            flash("邮箱格式有误")
+            flash("wrong email format.")
             return render_template("user_register.html")
 
 
-        #if not email.is_valid_email(team_email):
-            #flash("You're lying")
-            #return render_template("register.html")
+        if not sendemail.is_valid_email(user_email):
+            flash("You are lying")
+            return render_template("user_register.html")
 			
         confirmation_key = misc.generate_confirmation_key()
         pwhash = utils.user.create_password(user_pwd.encode())
@@ -185,7 +244,7 @@ def register():
         sendemail.send_confirmation_email(user_email, confirmation_key)
 
         session["user_id"] = user.id
-        flash("注册成功.")
+        flash("register successfully.")
         return redirect(url_for('team_dashboard'))
 
 @app.route('/logout/')
@@ -193,7 +252,7 @@ def logout():
     session.pop("user_id")
     if "team_id" in session:
         session.pop("team_id")
-    flash("您已经成功退出.")
+    flash("You have successfully logged out.")
     return redirect(url_for('root'))
 
 # Things that require a team
@@ -202,17 +261,19 @@ def logout():
 @decorators.login_required
 def confirm_email():
     if request.form["confirmation_key"] == g.user.email_confirmation_key:
-        flash("邮箱已确认!")
+        flash("confirmed!")
         g.user.email_confirmed = True
         g.user.save()
     else:
-        flash("验证码错误.")
+        flash("wrong.")
     return redirect(url_for('dashboard'))
 
-@app.route('/team_register/', methods=["POST"])
+@app.route('/team_register/', methods=["GET","POST"])
 @decorators.login_required
 @decorators.confirmed_email_required
 def team_register():
+    if request.method == "GET":
+        return redirect(url_for('team_dashboard'))
     if request.method == "POST":
         team_name = request.form["team_name"].strip()
         team_elig = "team_eligibility" in request.form
@@ -220,13 +281,13 @@ def team_register():
 
         try:
             if (Team.get(Team.name == team_name)):
-                flash("该队伍名已被占用")
+                flash("The team name has been used.")
                 return redirect(url_for('team_dashboard'))
         except Team.DoesNotExist:
             pass
 
         if len(team_name) > 50 or not team_name:
-            flash("您必须有一个队伍名!")
+            flash("wrong team name format!")
             return redirect(url_for('team_dashboard'))
 
         if not affiliation or len(affiliation) > 100:
@@ -237,7 +298,7 @@ def team_register():
         if not config.debug:
             TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
         session["team_id"] = team.id
-        flash("队伍申请已提交管理员.")
+        flash("The request has send to admin.")
         return redirect(url_for('team_dashboard'))
 
 @app.route('/team_modify/', methods=["POST"])
@@ -252,18 +313,18 @@ def team_modify():
         affi_changed = (affiliation!=g.team.affiliation)
         elig_changed = (team_elig!=g.team.eligible)
         if not name_changed and not affi_changed and not elig_changed:
-            flash("您没有修改任何队伍信息！")
+            flash("nothig changed!")
             return redirect(url_for('team_dashboard'))
         if name_changed:
             try:
                 if (Team.get(Team.name == team_name)):
-                    flash("该队伍名已被占用")
+                    flash("The team name has been used.")
                     return redirect(url_for('team_dashboard'))
             except Team.DoesNotExist:
                 pass
 
             if len(team_name) > 50 or not team_name:
-                flash("您必须有一个队伍名!")
+                flash("wrong team name format!")
                 return redirect(url_for('team_dashboard'))
 
         if affi_changed:
@@ -274,7 +335,7 @@ def team_modify():
         g.team.affiliation = affiliation
         g.team.eligible = team_elig
         g.team.save()
-        flash("队伍信息修改成功.")
+        flash("change successfully.")
         return redirect(url_for('team_dashboard'))
 
 @app.route('/team_join/', methods=["POST"])
@@ -286,14 +347,14 @@ def team_join():
         try:
             team=Team.get(Team.name == team_name)
             if not team.team_confirmed:
-                flash("该队伍尚未通过管理员同意，请等待，或加入其它队伍")
+                flash("The team has not be agreed by admin.Please wait,or join another team!")
                 return redirect(url_for('team_dashboard'))
             else:
                 TeamMember.create(team=team.id, member=g.user.id)
-                flash("申请已提交给队长")
+                flash("The request has sent to leader!")
                 return redirect(url_for('team_dashboard'))
         except Team.DoesNotExist:
-            flash("队伍不存在，请重新输入")
+            flash("team name don not exist!")
             return redirect(url_for('team_dashboard'))
 
 @app.route('/user_add/', methods=["POST"])   #审核加入队伍请求
@@ -302,17 +363,28 @@ def team_join():
 def user_add():
     if request.method == "POST":
         users = TeamMember.select().where(TeamMember.team == g.team)
+        # count the number of team_member
+        number = 0
+        for i in users:
+            if i.member_confirmed == True:
+                number = number+1
         for i in users:
             agree = str(i.member.username)
             reject = str(i.member.id)
             if agree in request.form and reject in request.form:
-                flash("只能选择一个")
+                flash("You can only choose one!")
                 return redirect(url_for('team_dashboard'))
             if agree in request.form:
-                i.member_confirmed = True
-                i.save()
+                if number < config.team_members:
+                    number = number+1
+                    i.member_confirmed = True
+                    i.save()
+                    flash("agree")
+                else:
+                    flash("The count of member must be less of 5")
             if reject in request.form:
                 TeamMember.delete().where(TeamMember.member==i.member).execute()
+                flash("reject")
         return redirect(url_for('team_dashboard'))
 
 @app.route('/user/', methods=["GET", "POST"])
@@ -323,45 +395,42 @@ def dashboard():
 
     elif request.method == "POST":
         if g.redis.get("ul{}".format(session["user_id"])):
-            flash("您提交的太快了!")
+            flash("too fast!")
             return redirect(url_for('dashboard'))
 
         user_name = request.form["user_name"].strip()
         user_email = request.form["user_email"].strip()
-        team_elig = "team_eligibility" in request.form
         email_changed = (user_email != g.user.email)
         name_changed = (user_name != g.user.username)
         if not email_changed and not name_changed:
-            flash("您没有做任何修改")
+            flash("nothing changed!")
             return redirect(url_for('dashboard'))
         if name_changed:
             try:
                 if (User.get(User.username == user_name)):
-                    flash("该用户名已被占用")
+                    flash("The name has been used!")
                     return redirect(url_for('dashboard'))
             except User.DoesNotExist:
                 pass
 
             if len(user_name) > 50 or not user_name:
-                flash("用户名不能为空")
+                flash("wrong name format.")
                 return redirect(url_for('dashboard'))
         g.user.username = user_name
         g.user.email = user_email
-        if not g.team.eligibility_locked:
-            g.team.eligible = team_elig
 
         g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), 120)
 
         if email_changed:
             if not sendemail.is_valid_email(user_email):
-                flash("您的邮箱不是合法邮箱！")
+                flash("You are lying")
                 return redirect(url_for('dashboard'))
             if not (user_email and "." in user_email and "@" in user_email):
-                flash("邮箱格式有误")
+                flash("wrong email format.")
                 return redirect(url_for('dashboard'))
             try:
                 if (User.get(User.email == user_email)):
-                    flash("该邮箱已被注册")
+                    flash("The email has been used!")
                     return redirect(url_for('dashboard'))
             except User.DoesNotExist:
                 pass
@@ -370,9 +439,9 @@ def dashboard():
             g.user.email_confirmed = False
 
             sendemail.send_confirmation_email(user_email, g.user.email_confirmation_key)
-            flash("修改已保存. 我们已经给您的邮箱发送了一个新的验证码，请您进行确认.")
+            flash("please confirme email")
         else:
-            flash("修改已保存.")
+            flash("save change.")
         g.user.save()
         return redirect(url_for('dashboard'))
 
@@ -484,11 +553,11 @@ def team_ticket_detail(ticket):
     try:
         ticket = TroubleTicket.get(TroubleTicket.id == ticket)
     except TroubleTicket.DoesNotExist:
-        flash("Couldn't find ticket #{}.".format(ticket))
+        flash("Could not find ticket #{}.".format(ticket))
         return redirect(url_for("team_tickets"))
 
     if ticket.team != g.team:
-        flash("That's not your ticket.")
+        flash("That is not your ticket.")
         return redirect(url_for("team_tickets"))
 
     comments = TicketComment.select().where(TicketComment.ticket == ticket).order_by(TicketComment.time)
@@ -499,16 +568,16 @@ def team_ticket_detail(ticket):
 @decorators.must_be_allowed_to("view tickets")
 def team_ticket_comment(ticket):
     if g.redis.get("ticketl{}".format(session["team_id"])):
-        return "You're doing that too fast."
+        return "You are doing that too fast."
     g.redis.set("ticketl{}".format(g.team.id), "1", 30)
     try:
         ticket = TroubleTicket.get(TroubleTicket.id == ticket)
     except TroubleTicket.DoesNotExist:
-        flash("Couldn't find ticket #{}.".format(ticket))
+        flash("Could not find ticket #{}.".format(ticket))
         return redirect(url_for("team_tickets"))
 
     if ticket.team != g.team:
-        flash("That's not your ticket.")
+        flash("That is not your ticket.")
         return redirect(url_for("team_tickets"))
 
     if request.form["comment"]:

@@ -8,6 +8,7 @@ from utils.decorators import admin_required, csrf_check
 from utils.notification import make_link
 from datetime import datetime
 from config import secret
+
 admin = Blueprint("admin", "admin", url_prefix="/admin")
 
 @admin.route("/")
@@ -25,7 +26,7 @@ def admin_login():
     elif request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        two = request.form["two"]
+        #two = request.form["two"]
         if getattr(secret, "admin_username", False):
             if username == secret.admin_username and password == secret.admin_password:
                 session["admin"] = username
@@ -43,7 +44,7 @@ def admin_login():
         flash("You have made a terrible mistake.")
         return render_template("admin/login.html")
 
-@admin.route('/team_add/', methods=["POST"])   #审核创建队伍请求
+@admin.route("/team_add/", methods=["POST"])   #审核创建队伍请求
 @admin_required
 def admin_team_add():
     if request.method == "POST":
@@ -52,7 +53,7 @@ def admin_team_add():
             agree = i.name 
             reject = str(i.id)
             if agree in request.form and reject in request.form:
-                flash("只能选择一个")
+                flash("You can only choose one!")
                 return redirect(url_for('.admin_dashboard'))
             if agree in request.form:
                 i.team_confirmed = True
@@ -60,10 +61,12 @@ def admin_team_add():
                 teammember.member_confirmed = True
                 teammember.save()
                 i.save()
+                flash("agree")
             if reject in request.form:
                 TeamMember.delete().where(TeamMember.member==i.team_leader).execute()
                 Team.delete().where(Team.id==i.id).execute()
                 TeamAccess.delete().where(TeamAccess.team==i).execute()
+                flash("reject")
         return redirect(url_for('.admin_dashboard'))
 
 @admin.route("/dashboard/")
@@ -121,12 +124,12 @@ def admin_show_team(tid):
     team = Team.get(Team.id == tid)
     return render_template("admin/team.html", team=team)
 
-# @admin.route("/team/<int:tid>/<csrf>/impersonate/")
-# @csrf_check
-# @admin_required
-# def admin_impersonate_team(tid):
-#     session["team_id"] = tid
-#     return redirect(url_for("scoreboard"))
+@admin.route("/team/<int:tid>/<csrf>/impersonate/")
+@csrf_check
+@admin_required
+def admin_impersonate_team(tid):
+    session["team_id"] = tid
+    return redirect(url_for("scoreboard"))
 
 @admin.route("/team/<int:tid>/<csrf>/toggle_eligibility/")
 @csrf_check

@@ -79,7 +79,25 @@ INFO:werkzeug:* Running on http://127.0.0.1:8001/(Press CTRL+C to quit)
 
 ## ctftool
 
-可以使用 `ctftool`做一些操作，例如：添加题目，添加队伍，添加管理员等。 如果目录结构如下所示：
+可以使用 `ctftool`做一些操作，例如：添加题目，添加队伍，添加管理员等。 
+
+```
+#创建表
+python ctftool create-tables
+#删除表
+python ctftool drop-tables
+#添加题目
+python ctftool add-challenge /path/to/problem.yml
+#添加管理员
+python ctftool add-admin
+Username:admin
+Password:password
+AdminUser created.
+#刷新缓存，在添加完题目后一定要重新刷新缓存，不然会出错
+python ctftool recache-solves
+```
+
+如果目录结构如下所示：
 
 - ctf-platform
 - ctf-problems
@@ -98,5 +116,5 @@ INFO:werkzeug:* Running on http://127.0.0.1:8001/(Press CTRL+C to quit)
 ## 可能会遇到的问题
 
 * 之前尝试在ubuntu 14.04中安装，在安装模块peewee时总是出现问题，安装成功后程序仍然显示无法识别peewee模块；在ubuntu 16.04中安装正常。
-* 需要安装redis服务。
+* 需要安装redis服务，在平台运行时保证redis服务处于运行状态。
 * windows平台和linux平台都可以运行。

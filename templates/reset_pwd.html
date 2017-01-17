@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}修改密码{% endblock %}
+{% block head %}
+<!--<script src='https://www.google.com/recaptcha/api.js'></script>-->
+{% endblock %}
+{% block content %}
+<h3>修改密码</h3>
+<form action="{{ url_for('reset_pwd') }}" method="POST">
+    <div class="input-field">
+        <input required maxlength="100" id="user-pwd" name="user_pwd" type="password" />
+        <label for="user-pwd">密码（8位及8位以上字母与数字组合）</label>
+    </div>
+	<div class="input-field">
+        <input required maxlength="100" id="pwd-confirmed" name="pwd_confirmed" type="password" />
+        <label for="pwd-confirmed">确认密码</label>
+    </div>
+    <br /><br />
+    <div class="g-recaptcha" data-sitekey="{{ config.secret.recaptcha_key }}"></div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+    <button class="btn waves-effect waves-light" type="submit">修改</button>
+</form>
+{% endblock %}

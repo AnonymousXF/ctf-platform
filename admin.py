@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from database import AdminUser, Team, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification
+from database import AdminUser, User, TeamMember, TeamAccess, Team, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification
 import utils
 import utils.admin
 import utils.scoreboard
@@ -7,6 +8,7 @@ from utils.decorators import admin_required, csrf_check
 from utils.notification import make_link
 from datetime import datetime
 from config import secret
+
 admin = Blueprint("admin", "admin", url_prefix="/admin")
 
 @admin.route("/")
@@ -42,16 +44,43 @@ def admin_login():
         flash("You have made a terrible mistake.")
         return render_template("admin/login.html")
 
+@admin.route("/team_add/", methods=["POST"])   #审核创建队伍请求
+@admin_required
+def admin_team_add():
+    if request.method == "POST":
+        team_notconfirmed = Team.select().where(Team.team_confirmed==False)
+        for i in team_notconfirmed:
+            agree = i.name 
+            reject = str(i.id)
+            if agree in request.form and reject in request.form:
+                flash("You can only choose one!")
+                return redirect(url_for('.admin_dashboard'))
+            if agree in request.form:
+                i.team_confirmed = True
+                teammember = TeamMember.get(TeamMember.member==i.team_leader)
+                teammember.member_confirmed = True
+                teammember.save()
+                i.save()
+                flash("agree")
+            if reject in request.form:
+                TeamMember.delete().where(TeamMember.member==i.team_leader).execute()
+                Team.delete().where(Team.id==i.id).execute()
+                TeamAccess.delete().where(TeamAccess.team==i).execute()
+                flash("reject")
+        return redirect(url_for('.admin_dashboard'))
+
 @admin.route("/dashboard/")
 @admin_required
 def admin_dashboard():
-    teams = Team.select()
+    team_confirmed = Team.select().where(Team.team_confirmed==True)
+    team_notconfirmed = Team.select().where(Team.team_confirmed==False)
+    team_notconfirmed_leader = User.select().join(Team).where(Team.team_confirmed==False)
     solves = ChallengeSolve.select(ChallengeSolve, Challenge).join(Challenge)
     adjustments = ScoreAdjustment.select()
-    scoredata = utils.scoreboard.get_all_scores(teams, solves, adjustments)
-    lastsolvedata = utils.scoreboard.get_last_solves(teams, solves)
+    scoredata = utils.scoreboard.get_all_scores(team_confirmed, solves, adjustments)
+    lastsolvedata = utils.scoreboard.get_last_solves(team_confirmed, solves)
     tickets = list(TroubleTicket.select().where(TroubleTicket.active == True))
-    return render_template("admin/dashboard.html", teams=teams, scoredata=scoredata, lastsolvedata=lastsolvedata, tickets=tickets)
+    return render_template("admin/dashboard.html", team_notconfirmed_leader=team_notconfirmed_leader, team_confirmed=team_confirmed, team_notconfirmed=team_notconfirmed,scoredata=scoredata, lastsolvedata=lastsolvedata, tickets=tickets)
 
 @admin.route("/tickets/")
 @admin_required

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Challenges{% endblock %}
+{% block title %}题目{% endblock %}
 {% block head %}
 <script>
     var state = !{{ solved.count() }};
@@ -33,16 +33,16 @@
 </style>
 {% endblock %}
 {% block content %}
-<p>You are playing on behalf of {{ team.name }}. If this is incorrect, you should
-<a href="{{ url_for('logout') }}">logout</a> and login with the correct team key.</p>
+<p>你正在代表队伍 {{ team.name }}参赛. 如果队伍不正确, 你应该立即
+<a href="{{ url_for('logout') }}">注销</a></p>
 
 <select onchange="filterCategories(this);">
-    <option value="*">Show all</option>
+    <option value="*">展示全部</option>
     {% for category in categories %}
     <option>{{ category }}</option>
     {% endfor %}
 </select>
-<span class="left"><a href="javascript:toggle()" id="toggleState">{% if solved.count() %}Expand all challenges.{% else %}Collapse all challenges.{% endif %}</a></span>
+<span class="left"><a href="javascript:toggle()" id="toggleState">{% if solved.count() %}展开题目{% else %}折叠题目{% endif %}</a></span>
 <br />
 
 <ul class="collapsible" data-collapsible="expandable">
@@ -66,12 +66,12 @@
         <div class="collapsible-body">
             <p>{{ challenge.description | safe }}
                 {% if challenge in solved %}
-                <br /><br /><strong>You've solved this challenge!</strong><br />
-                <a href="{{ url_for('challenge_show_solves', challenge=challenge.id) }}">View solves</a>
+                <br /><br /><strong>你已经答出了该道题目!</strong><br />
+                <a href="{{ url_for('challenge_show_solves', challenge=challenge.id) }}">查看解决了的队伍</a>
             </p>
             {% else %}
             <br /><br />
-            <a href="{{ url_for('challenge_show_solves', challenge=challenge.id) }}">View solves</a>
+            <a href="{{ url_for('challenge_show_solves', challenge=challenge.id) }}">查看解决了的队伍</a>
             </p>
             <form action="{{ url_for('submit', challenge=challenge.id) }}" data-challengeid="{{ challenge.id }}" method="POST">
                 <div class="container">
@@ -79,7 +79,7 @@
                         <input required id="flag{{ challenge.id }}" name="flag" type="text" />
                         <label for="flag{{ challenge.id }}">Flag</label>
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit">Submit</button>
+                    <button class="btn waves-effect waves-light" type="submit">提交</button>
                 </div>
                 <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
             </form><br />

@@ -1,20 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Open Ticket{% endblock %}
+{% block title %}新建 Ticket{% endblock %}
 {% block content %}
-<h2>Open a Trouble Ticket</h2>
-<p>The issue summary should be a one-sentence description of the problem you
-are having. Please elaborate on the issue in the description field.</p>
+<h2>新建一个 Trouble Ticket</h2>
+<p>问题摘要应该是您正在遇到的问题的详细描述。请在描述字段中详细说明问题。</p>
 
 <form method="POST">
     <div class="input-field">
         <input required id="summary" name="summary" type="text" />
-        <label for="summary">Issue summary</label>
+        <label for="summary">问题摘要</label>
     </div>
     <div class="input-field">
         <textarea required id="description" name="description" class="materialize-textarea"></textarea>
-        <label for="description">Issue description</label>
+        <label for="description">问题描述</label>
     </div>
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-    <button class="btn waves-effect waves-light" type="submit">Open ticket</button>
+    <button class="btn waves-effect waves-light" type="submit">新建ticket</button>
 </form>
 {% endblock %}

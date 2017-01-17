@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Scoreboard{% endblock %}
+{% block title %}分数板{% endblock %}
 {% block head %}
 <style type="text/css">
     .teamrow:not(.visible) {
@@ -18,12 +18,12 @@
     }
     function hideIneligible() {
         $(".teamrow.ineligible").removeClass("visible");
-        $("#toggle").html("Show ineligible teams");
+        $("#toggle").html("显示未认证的队伍");
         recalcRanks();
     }
     function showIneligible() {
         $(".teamrow.ineligible").addClass("visible");
-        $("#toggle").html("Hide ineligible teams");
+        $("#toggle").html("隐藏未认证的队伍");
         recalcRanks();
     }
     function toggleIneligible() {
@@ -39,15 +39,15 @@
 {% block content %}
 <div class="row">
     <div class="col s12">
-        <h3>Score progression</h3>
+        <h3>计分板</h3>
         <div id="chart"></div>
     </div>
 </div>
-<h3>Rankings</h3>
-<a href="javascript:toggleIneligible()" id="toggle">Hide ineligible teams</a>
+<h3>排行榜</h3>
+<a href="javascript:toggleIneligible()" id="toggle">隐藏未认证的队伍</a>
 <table>
     <thead>
-        <tr><th>Rank</th><th>Team</th><th>Affiliation</th><th>Score</th></tr>
+        <tr><th>名次</th><th>队伍</th><th>隶属于</th><th>分数</th></tr>
     </thead>
     <tbody>
         {% for eligible, teamid, team, affiliation, score in data %}

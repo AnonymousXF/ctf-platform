@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Solves for {{ challenge.name }}</h2>
-<a href="{{ url_for('challenges') }}">&lt;&lt; Back to challenges</a>
+<h2>答出了 {{ challenge.name }}</h2>
+<a href="{{ url_for('challenges') }}">&lt;&lt; 返回题目页面</a>
 <table>
     <thead>
         <tr>
-            <th>Team</th>
-            <th>Solve time</th>
+            <th>队伍</th>
+            <th>解决时间</th>
         </tr>
     </thead>
     <tbody>

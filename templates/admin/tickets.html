@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Trouble tickets</h2>
 {% if tickets %}
-The following tickets are open:
+开启的tickets:
 <div class="collection">
     {% for ticket in tickets %}
         {% if ticket.active %}
@@ -12,7 +12,7 @@ The following tickets are open:
     {% endfor %}
 </div>
 
-The following tickets are closed:
+关闭的tickets:
 <div class="collection">
     {% for ticket in tickets %}
         {% if not ticket.active %}
@@ -21,7 +21,7 @@ The following tickets are closed:
     {% endfor %}
 </div>
 {% else %}
-Yay, no tickets!
+耶,没有tickets!
 {% endif %}
 
 {% endblock %}

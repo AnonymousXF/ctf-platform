@@ -3,7 +3,7 @@
 {% block content %}
 <h2>Trouble tickets</h2>
 {% if tickets %}
-You have the following open tickets. If you're having an issue, you can <a href="{{ url_for('open_ticket') }}">open a new ticket</a>.
+你已经创建了以下tickets. 如果你还有问题, 你可以 <a href="{{ url_for('open_ticket') }}">创建一个新的ticket</a>.
 <div class="collection">
     {% for ticket in tickets %}
         {% if ticket.active %}
@@ -12,7 +12,7 @@ You have the following open tickets. If you're having an issue, you can <a href=
     {% endfor %}
 </div>
 
-You have the following closed tickets:
+你有以下这些关闭了的tickets:
 <div class="collection">
     {% for ticket in tickets %}
         {% if not ticket.active %}
@@ -21,6 +21,6 @@ You have the following closed tickets:
     {% endfor %}
 </div>
 {% else %}
-You have no open tickets right now. You can <a href="{{ url_for('open_ticket') }}">open one</a> if you're having an issue.
+你现在没有开启的tickets. 如果你还有问题，你可以<a href="{{ url_for('open_ticket') }}">创建</a>一个ticket
 {% endif %}
 {% endblock %}

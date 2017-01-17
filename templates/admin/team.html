@@ -1,36 +1,34 @@
 {% extends "admin/base.html" %}
 {% block content %}
-<h2>{{ team.name }}</h2>
-<a href="{{ url_for('admin.admin_impersonate_team', tid=team.id, csrf=csrf_token()) }}">Impersonate team</a><br />
+<h3>队伍名称：{{ team.name }}</h3>
+<a href="{{ url_for('admin.admin_impersonate_team', tid=team.id, csrf=csrf_token()) }}">Impersonate team</a>
 <p>
-This team is <strong>{{ "eligible" if team.eligible else "not eligible" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility', tid=team.id, csrf=csrf_token()) }}">toggle</a>).
-Eligibility is <strong>{{ "locked" if team.eligibility_locked else "unlocked" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility_lock', tid=team.id, csrf=csrf_token()) }}">toggle</a>).
+队伍 <strong>{{ "进行过资格认证" if team.eligible else "尚未进行资格认证" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility', tid=team.id, csrf=csrf_token()) }}">触发</a>).
+资格认证已 <strong>{{ "锁定" if team.eligibility_locked else "开启" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility_lock', tid=team.id, csrf=csrf_token()) }}">触发</a>).
 </p>
-<p>This team's affiliation is <strong>{{ team.affiliation }}</strong></p>
-<h3>Email</h3>
-<p>This team's email is <strong>{{ team.email }} ({{ "confirmed" if team.email_confirmed else "unconfirmed" }})</strong>.</p>
-{% if not team.email_confirmed %}
-<p>This team's confirmation key is <code>{{ team.email_confirmation_key }}</code>.
-{% endif %}
-<h3>Score adjustment</h3>
+<p>这个队伍隶属于 <strong>{{ team.affiliation }}</strong></p>
+<h3>队长</h3>
+<p>这个队伍的队长是： <strong>{{ team.email }} {{ team.team_leader.username }}</strong>.</p>
+<br>
+<h3>分数调整</h3>
 <form action="{{ url_for('admin.admin_score_adjust', tid=team.id) }}" method="POST">
     <div class="input-field">
         <input required type="number" name="value" id="value" />
-        <label for="value">Value</label>
+        <label for="value">分值</label>
     </div>
     <div class="input-field">
         <input required type="text" name="reason" id="reason" />
-        <label for="reason">Reason</label>
+        <label for="reason">原因</label>
     </div>
-    <button class="btn waves-effect waves-light" type="submit">Adjust score</button>
+    <button class="btn waves-effect waves-light" type="submit">调整</button>
 </form>
-
-<h3>Score calculation</h3>
+<br></br>
+<h3>计算分数</h3>
 {% if team.solves.count() %}
-<h4>Solved problems</h4>
+<h4>解决的题目</h4>
 <table>
     <thead>
-        <tr><th>Name</th><th>Category</th><th>Time</th><th>Value</th></tr>
+        <tr><th>题目名称</th><th>题目类型</th><th>解决时间</th><th>分值</th></tr>
     </thead>
     <tbody>
         {% for solve in team.solves %}
@@ -42,14 +40,15 @@ Eligibility is <strong>{{ "locked" if team.eligibility_locked else "unlocked" }}
         {% endfor %}
     </tbody>
 </table>
+<br></br>
 {% else %}
-<p>No problems have been solved.</p>
+<p>没有做出任何题目.</p>
 {% endif %}
 {% if team.adjustments.count() %}
-<h4>Score adjustments</h4>
+<h4>分数调整</h4>
 <table>
     <thead>
-        <tr><th>Reason</th><th>Value</th></tr>
+        <tr><th>原因</th><th>分值</th></tr>
     </thead>
     <tbody>
         {% for adj in team.adjustments %}
@@ -60,8 +59,7 @@ Eligibility is <strong>{{ "locked" if team.eligibility_locked else "unlocked" }}
         {% endfor %}
     </tbody>
 </table>
-{% else %}
-<p>No score adjustments have been made.</p>
+<br></br>
 {% endif %}
 
 {% endblock %}

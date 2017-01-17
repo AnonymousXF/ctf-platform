@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import config
 from flask import session, redirect, url_for, flash, g, abort
 from functools import wraps
@@ -5,10 +6,10 @@ from functools import wraps
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "team_id" in session and session["team_id"]:
+        if "user_id" in session and session["user_id"]:
             return f(*args, **kwargs)
         else:
-            flash("You need to be logged in to access that page.")
+            flash("你需要先登录.")
             return redirect(url_for('login'))
     return decorated
 
@@ -16,6 +17,9 @@ def must_be_allowed_to(thing):
     def _must_be_allowed_to(f):
         @wraps(f)
         def decorated(*args, **kwargs):
+            if "team_id" not in session:
+                flash("Please join a team!")
+                return redirect(url_for('dashboard'))
             if getattr(g, 'team_restricts', None) is None:
                 return redirect(url_for('login'))
             if g.team_restricts and thing in g.team_restricts:
@@ -28,14 +32,14 @@ def must_be_allowed_to(thing):
 def confirmed_email_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "team_id" in session and session["team_id"]:
-            if not g.team.email_confirmed:
-                flash("Please confirm your email in order to access that page.")
+        if "user_id" in session and session["user_id"]:
+            if not g.user.email_confirmed:
+                flash("Please confirm your email.")
                 return redirect(url_for('dashboard'))
             else:
                 return f(*args, **kwargs)
         else:
-            flash("You need to be logged in to access that page.")
+            flash("Need login first.")
             return redirect(url_for('login'))
     return decorated
 

@@ -18,7 +18,7 @@ import socket
 app.secret_key = config.secret.key
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 @app.before_request
 def make_info_available():

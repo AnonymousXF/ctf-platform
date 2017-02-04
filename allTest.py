@@ -13,7 +13,7 @@ unittest.TextTestRunner(verbosity=2).run(tests)
 COV.stop()
 COV.save()
 print('Coverage Summary:')
-COV.report()
+COV.report(show_missing=1)
 '''
 basedir = os.path.abspath(os.path.dirname(__file__)) 
 covdir = os.path.join(basedir, '/tmp/coverage') 

@@ -6,6 +6,7 @@ from database import *
 import peewee
 import config
 import re
+import redis
 import time
 import random
 import utils
@@ -71,7 +72,7 @@ class FlaskrTestCase(unittest.TestCase):
 					_csrf_token = csrf_token)
 		return self.app.post('/register/',data = data, follow_redirects = True), csrf_token
 	
-	#Test Register Function
+	# Test Register Function
 	def test_register_and_confirm_email_and_update_information(self):
 		if config.registration == True:
 			#Correct Register information----/register/
@@ -319,6 +320,8 @@ class FlaskrTestCase(unittest.TestCase):
 	def test_challenge_submit(self):
 		#Create a test challenge
 		chal = Challenge.create(name="Challenge Test", category="Test", description="Test", points=100, flag="Test", author="Test")
+		r = redis.StrictRedis()
+		r.hset("solves", chal.id, chal.solves.count())
 		# join a team
 		User.create(username=USER_NAME, password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
 		user = User.get(User.username==USER_NAME)

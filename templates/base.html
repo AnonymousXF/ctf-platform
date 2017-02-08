@@ -33,7 +33,10 @@
                             {% if logged_in %}
                             <li><a href="{{ url_for('challenges') }}"><font size="5px">题目</font></a></li>
                             {% endif %}
-                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">分数板</font></a></li>
+                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">排名</font></a></li>
+                            {% if logged_in %}
+                            <li><a href="{{ url_for('dynamic_display') }}"><font size="5px">动态</font></a></li>
+                            {% endif %}
                             {% endif %}
                             {% if logged_in %}
                             <li><a href="{{ url_for('team_tickets') }}"><font size="5px">Tickets</font></a></li>
@@ -67,7 +70,10 @@
                             {% if logged_in %}
                             <li><a href="{{ url_for('challenges') }}"><font size="5px">题目</font></a></li>
                             {% endif %}
-                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">分数板</font></a></li>
+                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">排名</font></a></li>
+                            {% if logged_in %}
+                            <li><a href="{{ url_for('dynamic_display') }}"><font size="5px">动态</font></a></li>
+                            {% endif %}
                             {% endif %}
                             {% if logged_in %}
                             <li><a href="{{ url_for('team_tickets') }}"><font size="5px">Tickets</font></a></li>

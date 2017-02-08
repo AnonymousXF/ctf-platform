@@ -42,7 +42,7 @@ class BasicTestCase(unittest.TestCase):
 	def test_index(self):
 		#/scoreboard/
 		response = self.app.get('/', content_type = 'html/text',follow_redirects=True)
-		self.assertIn('计分板', response.data)
+		self.assertIn('队伍积分', response.data)
 
 	def test_databse(self):
 		tester = os.path.exists("dev.db")

@@ -6,7 +6,7 @@ from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSol
 from datetime import datetime
 from peewee import fn
 
-from utils import user, decorators, flag, cache, misc, captcha, sendemail
+from utils import user, decorators, flag, cache, misc, captcha, sendemail, dynamics
 import utils.scoreboard
 
 import config
@@ -485,6 +485,16 @@ def teamconfirm():
             return "invalid", 403
     else:
         return "unauthorized", 401
+
+@app.route('/dynamic_display/')
+@decorators.competition_running_required
+@decorators.confirmed_email_required
+def dynamic_display():
+    chal_failed = ChallengeFailure.select()
+    chal_solved = ChallengeSolve.select()
+    submits = dynamics.sort(chal_failed,chal_solved)
+    results = dynamics.handle_solving(submits)
+    return render_template("dynamics.html", results = results)
 
 @app.route('/challenges/')
 @decorators.must_be_allowed_to("view challenges")

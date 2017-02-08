@@ -77,11 +77,34 @@ class FlaskrTestCase(unittest.TestCase):
 		# create a notification
 		notification = Notification.create(team=team, notification='test /dismiss/<int:nid>.json')
 		data = dict(_csrf_token=csrf_token)
+		# failed
+		User.create(username="test", password=pwhash, email='565635@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		user = User.get(User.username=="test",)
+		team = Team.create(name='test2', affiliation='hust', eligible=True, team_leader=user, team_confirmed=True)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		notification = Notification.create(team=team, notification='test /dismiss/<int:nid>.json')
+		rv = self.app.post('/api/dismiss/2.json', data=data, follow_redirects=True)
+		self.assertIn(b'You cannot dismiss notifications that do not belong to you.', rv.data)
+		# success
 		rv = self.app.post('/api/dismiss/1.json', data=data, follow_redirects=True)
 		self.assertIn(b'Success!', rv.data)
 
 	# test /_ctftime/
 	def test_ctftime_scoreboard_json(self):
+		# create a team
+		User.create(username=USER_NAME, password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		user = User.get(User.username==USER_NAME)
+		team = Team.create(name='test1', affiliation='hust', eligible=True, team_leader=user, team_confirmed=True)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		rv = self.login(USER_NAME,USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		# add challenge
+		chal = Challenge.create(name="Challenge Test", category="Test", description="Test", points=100, flag="Test", author="Test")
+		r = redis.StrictRedis()
+		r.hset("solves", chal.id, chal.solves.count())
+		correct_flag = dict(flag="Test", _csrf_token = csrf_token)
+		rv = self.app.post('/submit/{}/'.format(chal.id), data = correct_flag, follow_redirects=True)
+		self.assertIn(b'Success!',rv.data)
 		# if not config.immediate_scoreboard  datetime.now() < config.competition_end
 		config.immediate_scoreboard = False
 		rv= self.app.get('/api/_ctftime/', follow_redirects=True)

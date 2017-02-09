@@ -170,12 +170,12 @@
                     <td>{{team_member.username}}</td>
                     <td>{{team_member.email}}</td>
                     <td>
-                        <input name="{{team_member.username}}" type="checkbox" id="{{team_member.username}}" />
-                        <label for="{{team_member.username}}">同意</label>
+                        <input name="a{{team_member.id}}" type="checkbox" id="a{{team_member.id}}" />
+                        <label for="a{{team_member.id}}">同意</label>
                     </td>
                     <td>
-                        <input name="{{team_member.id}}" type="checkbox" id="{{team_member.id}}" />
-                        <label for="{{team_member.id}}">拒绝</label>
+                        <input name="a{{team_member.id}}a" type="checkbox" id="a{{team_member.id}}a" />
+                        <label for="a{{team_member.id}}a">拒绝</label>
                     </td>
                     </tr>
                 {% endif %}

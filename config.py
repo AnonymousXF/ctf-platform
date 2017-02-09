@@ -17,7 +17,6 @@ proxied_ip_header = "X-Forwarded-For"
 flag_rl = 5
 teams_on_graph = 10
 team_members = 4
-mail_from = "tjctf@sandbox1431.mailgun.org"
 
 immediate_scoreboard = True
 
@@ -39,8 +38,8 @@ resume_server = "https://resumes.tjctf.org"
 
 disallowed_domain = "tjctf.org"
 
-email_sender = 'xf930723@163.com'
-email_pass = 'Leehom251'
+email_sender = 'hustctf@163.com'
+email_pass = 'Hu5tCTF2o17'
 email_host = 'smtp.163.com'
 
 def competition_is_running():

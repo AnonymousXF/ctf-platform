@@ -1,7 +1,6 @@
 {% extends "admin/base.html" %}
 {% block content %}
 <h3>队伍名称：{{ team.name }}</h3>
-<a href="{{ url_for('admin.admin_impersonate_team', tid=team.id, csrf=csrf_token()) }}">Impersonate team</a>
 <p>
 队伍 <strong>{{ "进行过资格认证" if team.eligible else "尚未进行资格认证" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility', tid=team.id, csrf=csrf_token()) }}">触发</a>).
 资格认证已 <strong>{{ "锁定" if team.eligibility_locked else "开启" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility_lock', tid=team.id, csrf=csrf_token()) }}">触发</a>).

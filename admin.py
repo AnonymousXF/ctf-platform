@@ -22,11 +22,9 @@ def admin_root():
 def admin_login():
     if request.method == "GET":
         return render_template("admin/login.html")
-
-    elif request.method == "POST":
+    else:
         username = request.form["username"]
         password = request.form["password"]
-        #two = request.form["two"]
         if getattr(secret, "admin_username", False):
             if username == secret.admin_username and password == secret.admin_password:
                 session["admin"] = username
@@ -35,7 +33,6 @@ def admin_login():
             try:
                 user = AdminUser.get(AdminUser.username == username)
                 result = utils.admin.verify_password(user, password)
-                #result = result and utils.admin.verify_otp(user, two)
                 if result:
                     session["admin"] = user.username
                     return redirect(url_for(".admin_dashboard"))
@@ -47,27 +44,26 @@ def admin_login():
 @admin.route("/team_add/", methods=["POST"])   #审核创建队伍请求
 @admin_required
 def admin_team_add():
-    if request.method == "POST":
-        team_notconfirmed = Team.select().where(Team.team_confirmed==False)
-        for i in team_notconfirmed:
-            agree = i.name 
-            reject = str(i.id)
-            if agree in request.form and reject in request.form:
-                flash("You can only choose one!")
-                return redirect(url_for('.admin_dashboard'))
-            if agree in request.form:
-                i.team_confirmed = True
-                teammember = TeamMember.get(TeamMember.member==i.team_leader)
-                teammember.member_confirmed = True
-                teammember.save()
-                i.save()
-                flash("agree")
-            if reject in request.form:
-                TeamMember.delete().where(TeamMember.member==i.team_leader).execute()
-                Team.delete().where(Team.id==i.id).execute()
-                TeamAccess.delete().where(TeamAccess.team==i).execute()
-                flash("reject")
-        return redirect(url_for('.admin_dashboard'))
+    team_notconfirmed = Team.select().where(Team.team_confirmed==False)
+    for i in team_notconfirmed:
+        agree = 'a'+str(i.id) 
+        reject = 'a'+str(i.id)+'a'
+        if agree in request.form and reject in request.form:
+            flash("You can only choose one!")
+            return redirect(url_for('.admin_dashboard'))
+        elif agree in request.form:
+            i.team_confirmed = True
+            teammember = TeamMember.get(TeamMember.member==i.team_leader)
+            teammember.member_confirmed = True
+            teammember.save()
+            i.save()   
+            flash("agree")
+        elif reject in request.form:
+            TeamMember.delete().where(TeamMember.member==i.team_leader).execute()
+            Team.delete().where(Team.id==i.id).execute()
+            TeamAccess.delete().where(TeamAccess.team==i).execute()
+            flash("reject")
+    return redirect(url_for('.admin_dashboard'))
 
 @admin.route("/dashboard/")
 @admin_required
@@ -123,13 +119,6 @@ def admin_ticket_comment(ticket):
 def admin_show_team(tid):
     team = Team.get(Team.id == tid)
     return render_template("admin/team.html", team=team)
-
-@admin.route("/team/<int:tid>/<csrf>/impersonate/")
-@csrf_check
-@admin_required
-def admin_impersonate_team(tid):
-    session["team_id"] = tid
-    return redirect(url_for("scoreboard"))
 
 @admin.route("/team/<int:tid>/<csrf>/toggle_eligibility/")
 @csrf_check

@@ -9,7 +9,7 @@ def login_required(f):
         if "user_id" in session and session["user_id"]:
             return f(*args, **kwargs)
         else:
-            flash("你需要先登录.")
+            flash("Need login first.")
             return redirect(url_for('login'))
     return decorated
 

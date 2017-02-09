@@ -14,7 +14,7 @@ def submit_flag(team, challenge, flag):
         return FLAG_SUBMITTED_ALREADY
     elif not challenge.enabled:
         return FLAG_CANNOT_SUBMIT_WHILE_DISABLED
-    elif flag.strip().lower() != challenge.flag.strip().lower():
+    elif flag != challenge.flag:     # delete strip().lower()
         g.redis.set("rl{}".format(team.id), str(datetime.now()), config.flag_rl)
         ChallengeFailure.create(team=team, challenge=challenge, attempt=flag, time=datetime.now())
         return FLAG_INCORRECT

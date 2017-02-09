@@ -47,12 +47,12 @@
             <td>{{ leader.username }}</td>
             <td>{{ leader.email }}</td>
             <td>
-                <input name="{{team.name}}" type="checkbox" id="{{team.name}}" />
-                <label for="{{team.name}}">同意</label>    
+                <input name="a{{team.id}}" type="checkbox" id="a{{team.id}}" />
+                <label for="a{{team.id}}">同意</label>    
             </td>
             <td>
-                <input name="{{team.id}}" type="checkbox" id="{{team.id}}" />
-                <label for="{{team.id}}">拒绝</label>    
+                <input name="a{{team.id}}a" type="checkbox" id="a{{team.id}}a" />
+                <label for="a{{team.id}}a">拒绝</label>    
             </td>
         </tr>
         {% endif %}

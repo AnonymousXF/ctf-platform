@@ -5,11 +5,11 @@
     var state = !{{ solved.count() }};
     function openAll() {
         $(".collapsible-header").each(function(i, x){ $(x).hasClass("active") || $(x).click(); });
-        $("#toggleState").html("Collapse all challenges.");
+        $("#toggleState").html("收起所有题目");
     }
     function closeAll() {
         $(".collapsible-header").each(function(i, x){ $(x).hasClass("active") && $(x).click(); });
-        $("#toggleState").html("Expand all challenges.");
+        $("#toggleState").html("展开所有题目");
     }
     function toggle() {
         if(state) closeAll();
@@ -42,7 +42,7 @@
     <option>{{ category }}</option>
     {% endfor %}
 </select>
-<span class="left"><a href="javascript:toggle()" id="toggleState">{% if solved.count() %}展开题目{% else %}折叠题目{% endif %}</a></span>
+<span class="left"><a href="javascript:toggle()" id="toggleState">{% if solved.count() %}展开题目{% else %}收起题目{% endif %}</a></span>
 <br />
 
 <ul class="collapsible" data-collapsible="expandable">

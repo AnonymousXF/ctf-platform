@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, session, redirect, url_for, request, g, flash, jsonify
+from flask_paginate import Pagination,get_page_args
 app = Flask(__name__)
 
 from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, db
@@ -494,7 +495,20 @@ def dynamic_display():
     chal_solved = ChallengeSolve.select()
     submits = dynamics.sort(chal_failed,chal_solved)
     results = dynamics.handle_solving(submits)
-    return render_template("dynamics.html", results = results)
+
+    result = []
+    page,per_page,offset=get_page_args()
+    if int(page) == int(len(results)/per_page) + 1:
+        for i in range((page-1)*per_page, len(results)):
+            if results[i] is not None:
+                result.append(results[i])
+    else:
+        for i in range((page-1)*per_page, page*per_page):
+            if results[i] is not None:
+                result.append(results[i])
+    pagination = Pagination(page=page,total=len(results),per_page=per_page,record_name='result',format_total=True,format_number=True)
+
+    return render_template("dynamics.html", result = result, pagination=pagination, page=page,per_page=per_page)
 
 @app.route('/challenges/')
 @decorators.must_be_allowed_to("view challenges")

@@ -2,6 +2,7 @@
 {% block title %}动态{% endblock %}
 {% block content %}
 <h4>通知</h4>
+
 <h4>解题动态</h4>
 <table>
     <thead>
@@ -9,18 +10,25 @@
             <th>队伍</th>
             <th>提交的题目</th>
             <th>提交时间</th>
-            <th>提交flag</th>
+            <th>提交flag状态</th>
         </tr>
     </thead>
     <tbody>
-        {% for result in results %}
+        {% for res in result %}
         <tr>
-            <td>{{ result['teamname'] }}</td>
-            <td>{{ result['chal_name'] }}</td>
-            <td><abbr class="time" title="{{ result['submit_time'] }}">{{ result['submit_time'] }}</abbr></td>
-            <td>{{ result['access'] }}</td>
+            <td>{{ res['teamname'] }}</td>
+            <td>{{ res['chal_name'] }}</td>
+            <td><abbr class="time" title="{{ res['submit_time'] }}">{{ res['submit_time'] }}</abbr></td>
+            {% if res['status'] == "Failed" %}
+            <td style="color:red">{{ res['status'] }}</td>
+            {% else %}
+            <td style="color:green">{{ res['status'] }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
 </table>
+{{ pagination.links }}
+
+
 {% endblock %}

@@ -60,7 +60,7 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.app.post('/api/submit/1.json', data=data, follow_redirects=True)
 		self.assertIn(b'You\'re submitting flags too fast!', rv.data)
 		# wait some time and submit correct flag
-		time.sleep(3)
+		time.sleep(10)
 		data = dict(_csrf_token=csrf_token, flag='Test')
 		rv = self.app.post('/api/submit/1.json', data=data, follow_redirects=True)
 		self.assertIn(b'Success!', rv.data)

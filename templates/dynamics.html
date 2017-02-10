@@ -2,7 +2,28 @@
 {% block title %}动态{% endblock %}
 {% block content %}
 <h4>通知</h4>
-
+<div style="height:283;width:1000;overflow:auto">
+    {% if not notices %}
+    <p>暂无任何通知！</p>
+    {% else %}
+    <ul class="collapsible popout" data-collapsible="accordion">
+        {% for notice in notices %}
+        <li>
+            <div class="collapsible-header"><i class="material-icons">place</i>
+                {{ notice.title }}
+                <span class="right">
+                    <span>发布时间:{{ notice.time }}</span>
+                </span>
+            </div>
+            <div class="collapsible-body">
+                <p>{{ notice.content | safe }}</p>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+<br><br>
 <h4>解题动态</h4>
 <table>
     <thead>
@@ -29,6 +50,4 @@
     </tbody>
 </table>
 {{ pagination.links }}
-
-
 {% endblock %}

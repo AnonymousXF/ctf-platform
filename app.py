@@ -3,11 +3,11 @@ from flask import Flask, render_template, session, redirect, url_for, request, g
 from flask_paginate import Pagination,get_page_args
 app = Flask(__name__)
 
-from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, db
+from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem, db
 from datetime import datetime
 from peewee import fn
 
-from utils import user, decorators, flag, cache, misc, captcha, sendemail, dynamics
+from utils import user, decorators, flag, cache, misc, sendemail,dynamics
 import utils.scoreboard
 
 import config
@@ -103,7 +103,7 @@ def scoreboard():
 def login():
     if request.method == "GET":
         return render_template("login.html")
-    elif request.method == "POST":
+    else:
         username = request.form["user_name"]
         password = request.form["user_pwd"]
         try:
@@ -129,7 +129,7 @@ def login():
 def forget_pwd():
     if request.method == "GET":
         return render_template("forget_pwd.html")
-    if request.method == "POST":
+    else:
         user_name =request.form['user_name']
         try:
             user = User.get(User.username==user_name)
@@ -138,13 +138,13 @@ def forget_pwd():
                 #sendemail.send_confirmation_email(user.email, confirmation_key)
                 user.email_confirmation_key = confirmation_key
                 user.save()
-                flash("验证码已发送到邮箱")
+                flash("The confirmed code has been send to your email")
                 return render_template("forget_pwd.html")
             else:
-                flash("对不起，您的邮箱尚未进行认证。你可以重新注册一个账号")
-                return render_template("user_register.html")
+                flash("Your email has not confirmed,you can input the confirmed code in your email")
+                return render_template("forget_pwd.html")
         except User.DoesNotExist:
-            flash("用户名不存在")
+            flash("Not exist!")
             return render_template("forget_pwd.html")
 
 @app.route('/confirm_code/', methods=["POST"])
@@ -155,25 +155,26 @@ def confirm_code():
         try:
             user = User.get(User.username==user_name)
             if user.email_confirmation_key==confirm_code:
-                flash("验证码正确")
+                flash("correct!")
                 session['user_id'] = user.id
                 g.user = user
                 return render_template("reset_pwd.html")
             else:
-                flash("验证码错误")
+                flash("wrong!")
                 return render_template("forget_pwd.html")
         except User.DoesNotExist:
-            flash("用户名错误")
+            flash("Not exist!")
             return render_template("forget_pwd.html")
 
 @app.route('/reset_pwd/',methods=["POST"])
+@decorators.login_required
 def reset_pwd():
     if request.method == "POST":
         user_pwd = request.form["user_pwd"].strip()
         pwd_confirmed = request.form["pwd_confirmed"].strip()
         user = User.get(User.username==g.user.username)
         if not user_pwd ==pwd_confirmed:
-            flash("2次密码不一致")
+            flash("Entered passwords differs")
             return render_template("reset_pwd.html")
         if not utils.user.check_Password(user_pwd):
             flash("wrong pwd format.")
@@ -181,7 +182,8 @@ def reset_pwd():
         pwhash = utils.user.create_password(user_pwd.encode())
         g.user.password = pwhash
         g.user.save()
-        flash("密码修改成功")
+        flash("Success")
+        session.pop("user_id")
         return redirect(url_for('login'))
 
 @app.route('/register/', methods=["GET", "POST"])
@@ -194,7 +196,7 @@ def register():
 
     if request.method == "GET":
         return render_template("user_register.html")
-    elif request.method == "POST":
+    else:
         #error, message = captcha.verify_captcha()
         #if error:
             #flash(message)
@@ -204,11 +206,15 @@ def register():
         user_email = request.form["user_email"].strip()
         user_pwd = request.form["user_pwd"].strip()
         pwd_confirmed = request.form["pwd_confirmed"].strip()
+        if user_pwd != pwd_confirmed:
+            flash("Entered passwords differs")
+            return render_template("user_register.html")
 
-        if not utils.user.check_Password(user_pwd):
+        elif not utils.user.check_Password(user_pwd):
             flash("wrong pwd format.")
             return render_template("user_register.html")
 		
+
         try:
             if(User.get(User.username == user_name)):
 			    flash("The name has been used!")
@@ -275,7 +281,7 @@ def confirm_email():
 def team_register():
     if request.method == "GET":
         return redirect(url_for('team_dashboard'))
-    if request.method == "POST":
+    else:
         team_name = request.form["team_name"].strip()
         team_elig = "team_eligibility" in request.form
         affiliation = request.form["affiliation"].strip()
@@ -290,7 +296,6 @@ def team_register():
         if len(team_name) > 50 or not team_name:
             flash("wrong team name format!")
             return redirect(url_for('team_dashboard'))
-
         if not affiliation or len(affiliation) > 100:
             affiliation = "No affiliation"
         team_leader = User.get(User.id == g.user.id)
@@ -370,8 +375,8 @@ def user_add():
             if i.member_confirmed == True:
                 number = number+1
         for i in users:
-            agree = str(i.member.username)
-            reject = str(i.member.id)
+            agree = 'a'+str(i.member.id)
+            reject = 'a'+str(i.member.id)+'a'
             if agree in request.form and reject in request.form:
                 flash("You can only choose one!")
                 return redirect(url_for('team_dashboard'))
@@ -389,12 +394,12 @@ def user_add():
         return redirect(url_for('team_dashboard'))
 
 @app.route('/user/', methods=["GET", "POST"])
-#@decorators.login_required
+@decorators.login_required
 def dashboard():
     if request.method == "GET":
         return render_template("dashboard.html")
 
-    elif request.method == "POST":
+    else:
         if g.redis.get("ul{}".format(session["user_id"])):
             flash("too fast!")
             return redirect(url_for('dashboard'))
@@ -447,7 +452,7 @@ def dashboard():
         return redirect(url_for('dashboard'))
 
 @app.route('/team/', methods=["GET", "POST"])
-#@decorators.login_required
+@decorators.login_required
 def team_dashboard():
     if request.method == "GET":
         if "team_id" in session:
@@ -506,9 +511,10 @@ def dynamic_display():
         for i in range((page-1)*per_page, page*per_page):
             if results[i] is not None:
                 result.append(results[i])
-    pagination = Pagination(page=page,total=len(results),per_page=per_page,record_name='result',format_total=True,format_number=True)
+    pagination = Pagination(page=page,total=len(results),per_page=per_page,record_name='result')
 
-    return render_template("dynamics.html", result = result, pagination=pagination, page=page,per_page=per_page)
+    notices = NewsItem.select().order_by(-NewsItem.time)
+    return render_template("dynamics.html", notices=notices, result=result, pagination=pagination)
 
 @app.route('/challenges/')
 @decorators.must_be_allowed_to("view challenges")
@@ -559,7 +565,7 @@ def team_tickets():
 def open_ticket():
     if request.method == "GET":
         return render_template("open_ticket.html")
-    elif request.method == "POST":
+    else:
         if g.redis.get("ticketl{}".format(session["team_id"])):
             return "You're doing that too fast."
         g.redis.set("ticketl{}".format(g.team.id), "1", 30)
@@ -656,4 +662,4 @@ def generate_csrf_token():
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
-    app.run(debug=config.debug, port=8001)
+    app.run(debug=True, port=8001)

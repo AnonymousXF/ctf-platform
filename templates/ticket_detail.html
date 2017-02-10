@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Ticket #{{ ticket.id }}{% endblock %}
 {% block content %}
-<h2>Ticket #{{ ticket.id }}: {{ ticket.summary }}</h2>
+<h4>Ticket #{{ ticket.id }}: {{ ticket.summary }}</h4>
 <p>{{ ticket.description }}</p>
 <small><abbr class="time" title="{{ ticket.opened_at }}">{{ ticket.opened_at }}</abbr> &middot; {{ g.team.name }}</small>
 {% for comment in comments %}

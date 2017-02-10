@@ -10,9 +10,10 @@ import redis
 import time
 import random
 import utils
+from datetime import datetime
 
 USER_NAME = 'user'
-USER_EMAIL = 'jjxf251@163.com'
+USER_EMAIL = '464059291@qq.com'
 USER_PASSWORD = '123456ASD'
 r = random.SystemRandom()
 secret = "".join([r.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for i in range(16)])
@@ -71,7 +72,7 @@ class FlaskrTestCase(unittest.TestCase):
 					pwd_confirmed = pwd_confirmed,
 					_csrf_token = csrf_token)
 		return self.app.post('/register/',data = data, follow_redirects = True), csrf_token
-	
+
 	# Test Register Function
 	def test_register_and_confirm_email_and_update_information(self):
 		if config.registration == True:
@@ -87,7 +88,6 @@ class FlaskrTestCase(unittest.TestCase):
 			self.assertIn(b'wrong.',rv.data)
 			rv = self.app.post('/confirm_email/',data = correct_data, follow_redirects=True)
 			self.assertIn(b'confirmed!',rv.data)
-
 			# update user_information 
 			time.sleep(60)
 			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email=USER_EMAIL, _csrf_token =csrf_token), follow_redirects=True)
@@ -108,6 +108,7 @@ class FlaskrTestCase(unittest.TestCase):
 			wrong_email_data1 = dict(user_name = USER_NAME, user_email = 'qwerasdf', _csrf_token =csrf_token)
 			wrong_email_data2 = dict(user_name = USER_NAME, user_email = 'qwerasdf.', _csrf_token =csrf_token)
 			wrong_email_data3 = dict(user_name = USER_NAME, user_email = 'qwerasdf@', _csrf_token =csrf_token)
+			wrong_email_data4 = dict(user_name = USER_NAME, user_email = 'qwerasdf@tjctf.org', _csrf_token =csrf_token)
 			time.sleep(3)
 			rv = self.app.post('/user/',data = wrong_email_data1, follow_redirects=True)
 			self.assertIn(b'wrong email format.',rv.data)
@@ -118,8 +119,14 @@ class FlaskrTestCase(unittest.TestCase):
 			rv = self.app.post('/user/',data = wrong_email_data3, follow_redirects=True)
 			self.assertIn(b'wrong email format.',rv.data)
 			time.sleep(120)
+			rv = self.app.post('/user/',data = wrong_email_data4, follow_redirects=True)
+			self.assertIn(b'You are lying',rv.data)
+			time.sleep(120)
 			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email='3333333@qq.com', _csrf_token =csrf_token), follow_redirects=True)
 			self.assertIn(b'The email has been used!',rv.data)
+			time.sleep(120)
+			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email='123456@qq.com', _csrf_token =csrf_token), follow_redirects=True)
+			self.assertIn(b'please confirme email',rv.data)
 
 			#Wrong register information-----/register/
 			#team_name = repeat or NULL or too long
@@ -136,8 +143,6 @@ class FlaskrTestCase(unittest.TestCase):
 			wrongEmail2 = 'qweradsf.'
 			wrongEmail3 = 'qwerqwasdf@'
 			wrongEmail4 = 'qweradf@tjctf.org'
-			rv = self.register('2'+USER_NAME,USER_EMAIL,USER_PASSWORD,USER_PASSWORD)
-			self.assertIn(b'The email has been used!',rv[0].data)
 			rv = self.register('2'+USER_NAME,'',USER_PASSWORD,USER_PASSWORD)
 			self.assertIn(b'wrong email format.',rv[0].data)
 			rv = self.register('2'+USER_NAME,wrongEmail1,USER_PASSWORD,USER_PASSWORD)
@@ -148,11 +153,16 @@ class FlaskrTestCase(unittest.TestCase):
 			self.assertIn(b'wrong email format.',rv[0].data)
 			rv = self.register('2'+USER_NAME,wrongEmail4,USER_PASSWORD,USER_PASSWORD)
 			self.assertIn(b'You are lying',rv[0].data)
+			# wrong pwd
+			rv = self.register('2'+USER_NAME,'358693294@qq.com','123456ASD','123456')
+			self.assertIn(b'Entered passwords differs',rv[0].data)
+			rv = self.register('2'+USER_NAME,'358693294@qq.com','123456','123456')
+			self.assertIn(b'wrong pwd format.',rv[0].data)
 
 		else:
 			rv = self.app.get('/register/',follow_redirects=True)
 			self.assertEqual(rv.data, b'抱歉，现在暂时无法注册。有问题请联系hustctf@163.com')
-	
+
 	def login(self, user_name, user_pwd):
 		#Get csrf_token
 		html = self.app.get('/login/',follow_redirects=True).data
@@ -185,6 +195,7 @@ class FlaskrTestCase(unittest.TestCase):
 	def test_team_register(self):
 		User.create(username=USER_NAME, password=pwhash, email=USER_EMAIL, email_confirmation_key='12345678956565')
 		rv = self.login(USER_NAME,USER_PASSWORD)
+		rv = self.app.get('/team_register/', follow_redirects = True)
 		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
 		# didn't confirm email
 		data = dict(team_name = TEAM_NAMR,
@@ -216,6 +227,14 @@ class FlaskrTestCase(unittest.TestCase):
 					_csrf_token = csrf_token)
 		rv = self.app.post('/team_register/',data = data, follow_redirects = True)
 		self.assertIn(b'wrong team name format!',rv.data)
+		# No affiliation
+		data = dict(team_name = 'AAAAA',
+					affiliation = '',
+					team_eligibility = TEAM_ELIG,
+					_csrf_token = csrf_token)
+		rv = self.app.post('/team_register/',data = data, follow_redirects = True)
+		self.assertIn(b'The request has send to admin.',rv.data)
+
 
 	# test /team_modify/
 	def test_team_modify(self):
@@ -257,6 +276,13 @@ class FlaskrTestCase(unittest.TestCase):
 					_csrf_token = csrf_token)
 		rv = self.app.post('/team_modify/',data = data, follow_redirects = True)
 		self.assertIn(b'wrong team name format!',rv.data)
+		# No affiliation
+		data = dict(team_name = 'test2',
+					affiliation = '',
+					team_eligibility = TEAM_ELIG,
+					_csrf_token = csrf_token)
+		rv = self.app.post('/team_modify/',data = data, follow_redirects = True)
+		self.assertIn(b'change successfully',rv.data)
 		# correct change
 		data = dict(team_name = 'test2',
 					affiliation = TEAM_AFFILIATION,
@@ -276,10 +302,6 @@ class FlaskrTestCase(unittest.TestCase):
 		User.create(username=USER_NAME, password=pwhash, email=USER_EMAIL, email_confirmation_key='12345678956565')
 		rv = self.login(USER_NAME,USER_PASSWORD)
 		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
-		data = dict(team_name = TEAM_NAMR,
-					affiliation = TEAM_AFFILIATION,
-					team_eligibility = TEAM_ELIG,
-					_csrf_token = csrf_token)
 		confirmation_key = User.get(User.username == USER_NAME).email_confirmation_key
 		correct_data = dict(confirmation_key = confirmation_key, _csrf_token = csrf_token)
 		self.app.post('/confirm_email/',data = correct_data, follow_redirects=True)
@@ -295,11 +317,46 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.app.post('/team_join/',data = dict(team_name='test1', _csrf_token = csrf_token), follow_redirects=True)
 		self.assertIn(b'The request has sent to leader!',rv.data)
 		self.logout()
-		# team leader login
+		# You can only choose one!
 		rv = self.login('nana',USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/user_add/',data = dict(a2='checked', a2a='checked', _csrf_token = csrf_token), follow_redirects=True)
+		self.assertIn(b'You can only choose one!',rv.data)
+		self.logout()
+		# reject
+		rv = self.login('nana',USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/user_add/',data = dict(a2a='checked', _csrf_token = csrf_token), follow_redirects=True)
+		self.assertIn(b'reject',rv.data)
+		self.logout()
 		# accept
-		rv = self.app.post('/user_add/',data = dict(user='checked', _csrf_token = csrf_token), follow_redirects=True)
+		rv = self.login(USER_NAME,USER_PASSWORD)
+		self.app.post('/team_join/',data = dict(team_name='test1', _csrf_token = csrf_token), follow_redirects=True)
+		self.logout()
+		rv = self.login('nana',USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/user_add/',data = dict(a2='checked', _csrf_token = csrf_token), follow_redirects=True)
 		self.assertIn(b'agree',rv.data)
+		self.logout()
+		rv = self.login(USER_NAME,USER_PASSWORD)
+		self.logout()
+		# The count of member must be less of 5
+		user = User.create(username='user1', password=pwhash, email='user1@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		user = User.create(username='user2', password=pwhash, email='user2@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		user = User.create(username='user3', password=pwhash, email='user3@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		user = User.create(username='user4', password=pwhash, email='user4@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		user = User.create(username='user5', password=pwhash, email='user5@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		rv = self.login('user5',USER_PASSWORD)
+		self.app.post('/team_join/',data = dict(team_name='test1', _csrf_token = csrf_token), follow_redirects=True)
+		self.logout()
+		rv = self.login('nana',USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/user_add/',data = dict(a7='checked', _csrf_token = csrf_token), follow_redirects=True)
+		self.assertIn(b'The count of member must be less of 5',rv.data)
 
  	def test_challenge_without_join_team_and_with_join_team(self):
 		User.create(username=USER_NAME, password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
@@ -315,7 +372,7 @@ class FlaskrTestCase(unittest.TestCase):
 		TeamMember.create(team=team, member=user, member_confirmed=True)
 		rv = self.login(USER_NAME,USER_PASSWORD)
 		rv = self.app.get('/challenges/',data=dict(_csrf_token=csrf_token),follow_redirects=True)
- 		self.assertIn(b'折叠题目',rv.data)
+ 		self.assertIn(b'收起题目',rv.data)
 
 	def test_challenge_submit(self):
 		#Create a test challenge
@@ -332,11 +389,21 @@ class FlaskrTestCase(unittest.TestCase):
 		#submit flag-----/submit/<int:challenge>/
 		wrong_flag = dict(flag="wrong", _csrf_token = csrf_token)
 		correct_flag = dict(flag="Test", _csrf_token = csrf_token)
+		chal.enabled = False
+		chal.save()
+		rv = self.app.post('/submit/{}/'.format(chal.id), data = wrong_flag, follow_redirects=True)
+		self.assertIn(b'You cannot submit a flag for a disabled problem.',rv.data)
+		time.sleep(30)
+		chal.enabled = True
+		chal.save()
 		rv = self.app.post('/submit/{}/'.format(chal.id), data = wrong_flag, follow_redirects=True)
 		self.assertIn(b'Incorrect flag.',rv.data)
 		time.sleep(30)
 		rv = self.app.post('/submit/{}/'.format(chal.id), data = correct_flag, follow_redirects=True)
 		self.assertIn(b'Success!',rv.data)
+		time.sleep(30)
+		rv = self.app.post('/submit/{}/'.format(chal.id), data = correct_flag, follow_redirects=True)
+		self.assertIn(b'already solved that problem!',rv.data)
 		#challenge_show_solves-----/challenges/<int:challenge>/solves/
 		rv = self.app.get('/challenges/{}/solves/'.format(chal.id), data=dict(_csrf_token=csrf_token),follow_redirects=True)
 		self.assertIn(b'答出了',rv.data)
@@ -357,6 +424,11 @@ class FlaskrTestCase(unittest.TestCase):
 		ticket = dict(summary=TEST_TICKET_SUMMARY,description=TEST_TICKET_DESCRIBE, _csrf_token=csrf_token)
 		rv = self.app.post('/tickets/new/', data=ticket, follow_redirects=True)
 		self.assertIn(b'Ticket #1 opened.',rv.data)
+		rv = self.app.post('/tickets/new/', data=ticket, follow_redirects=True)
+		self.assertIn(b'doing that too fast.',rv.data)
+		time.sleep(30)
+		rv = self.app.post('/tickets/new/', data=ticket, follow_redirects=True)
+		self.assertIn(b'Ticket #2 opened.',rv.data)
 		#-----/tickets/
 		rv = self.app.get('/tickets/', follow_redirects=True)
 		self.assertIn(b'#1 {}'.format(TEST_TICKET_SUMMARY),rv.data)
@@ -392,6 +464,91 @@ class FlaskrTestCase(unittest.TestCase):
 		time.sleep(30)
 		rv = self.app.post('/tickets/1/comment/',data=dict(comment=comment,_csrf_token=csrf_token),follow_redirects=True)
 		self.assertIn(b'Ticket re-opened.',rv.data)
+		self.logout()
+		user = User.create(username='test1', password=pwhash, email='11111@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		self.login('test1',USER_PASSWORD)
+		rv = self.app.get('/tickets/1/',follow_redirects=True)
+		self.assertIn(b'Please join a team!',rv.data)
+		self.logout()
+		team = Team.create(name='team', affiliation='hust', eligible=True, team_leader=user, team_confirmed=True)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		rv = self.app.get('/tickets/1/',follow_redirects=True)
+		self.assertIn(b'Need login first.',rv.data)
+		self.login('test1',USER_PASSWORD)
+		rv = self.app.get('/tickets/1/',follow_redirects=True)
+		self.assertIn(b'That is not your ticket',rv.data)
+
+	# test forget password
+	def test_forget_pwd(self):
+		# User.DoesNotExist
+		html = self.app.get('/forget_pwd/',follow_redirects=True).data
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
+		data = dict(user_name = 'nana', _csrf_token = csrf_token)
+		rv = self.app.post('/forget_pwd/',data = data,follow_redirects=True)
+		self.assertIn(b'Not exist!',rv.data)
+		# has confired email
+		User.create(username='nana', password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
+		html = self.app.get('/forget_pwd/',follow_redirects=True).data
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
+		data = dict(user_name = 'nana', _csrf_token = csrf_token)
+		rv = self.app.post('/forget_pwd/',data = data,follow_redirects=True)
+		self.assertIn(b'The confirmed code has been send to your email',rv.data)
+		#Not exist!
+		data = dict(user_name1 = 'test', confirm_code= '12345678956565', _csrf_token = csrf_token)
+		rv = self.app.post('/confirm_code/',data = data,follow_redirects=True)
+		# wrong
+		data = dict(user_name1 = 'nana', confirm_code= '12345678956565', _csrf_token = csrf_token)
+		rv = self.app.post('/confirm_code/',data = data,follow_redirects=True)
+		self.assertIn(b'wrong',rv.data)
+		# correct
+		user = User.get(User.username=='nana')
+		data = dict(user_name1 = 'nana', confirm_code= user.email_confirmation_key, _csrf_token = csrf_token)
+		rv = self.app.post('/confirm_code/',data = data,follow_redirects=True)
+		self.assertIn(b'correct',rv.data)
+		# test reset_pwd
+		data = dict(user_pwd = '123456ASD', pwd_confirmed='123456' , _csrf_token = csrf_token)
+		rv = self.app.post('/reset_pwd/',data = data,follow_redirects=True)
+		self.assertIn(b'Entered passwords differs',rv.data)
+		data = dict(user_pwd = '123456', pwd_confirmed='123456' , _csrf_token = csrf_token)
+		rv = self.app.post('/reset_pwd/',data = data,follow_redirects=True)
+		self.assertIn(b'wrong pwd format.',rv.data)
+		data = dict(user_pwd = '123456ASD', pwd_confirmed='123456ASD' , _csrf_token = csrf_token)
+		rv = self.app.post('/reset_pwd/',data = data,follow_redirects=True)
+		self.assertIn(b'Success',rv.data)
+		# has not confirme email
+		User.create(username='test', password=pwhash, email='565365@qq.com', email_confirmed=False, email_confirmation_key='12345678956565')
+		html = self.app.get('/forget_pwd/',follow_redirects=True).data
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
+		data = dict(user_name = 'test', _csrf_token = csrf_token)
+		rv = self.app.post('/forget_pwd/',data = data,follow_redirects=True)
+		self.assertIn(b'Your email has not confirmed,you can input the confirmed code in your email',rv.data)
+
+	#test dynamic_display
+	def test_dynamic_display(self):
+		# Create a notice
+		NewsItem.create(title="TestTitle", content="TestContent", time=datetime.now())
+		# Create a test challenge
+		chal = Challenge.create(name="Challenge Test", category="Test", description="Test", points=100, flag="Test",
+								author="Test")
+		r = redis.StrictRedis()
+		r.hset("solves", chal.id, chal.solves.count())
+		# join a team
+		User.create(username=USER_NAME, password=pwhash, email='56565@qq.com', email_confirmed=True,
+					email_confirmation_key='12345678956565')
+		user = User.get(User.username == USER_NAME)
+		team = Team.create(name='test1', affiliation='hust', eligible=True, team_leader=user, team_confirmed=True)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		rv = self.login(USER_NAME, USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
+		#GET Method----notice
+		rv = self.app.get('/dynamic_display/', follow_redirects=True)
+		self.assertIn("TestTitle",rv.data)
+		#GET Method----dynamics
+		flag = dict(flag="Test", _csrf_token=csrf_token)
+		rv = self.app.post('/submit/{}/'.format(chal.id), data = flag, follow_redirects=True)
+		self.assertIn(b'Success!',rv.data)
+		rv = self.app.get('/dynamic_display/', follow_redirects=True)
+		self.assertIn("Success", rv.data)
 
 if __name__ == '__main__':
 	unittest.main()

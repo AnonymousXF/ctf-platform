@@ -1,16 +1,15 @@
 {% extends "admin/base.html" %}
 {% block content %}
-<h3>队伍名称：{{ team.name }}</h3>
-<a href="{{ url_for('admin.admin_impersonate_team', tid=team.id, csrf=csrf_token()) }}">Impersonate team</a>
+<h4>队伍名称：{{ team.name }}</h4>
 <p>
 队伍 <strong>{{ "进行过资格认证" if team.eligible else "尚未进行资格认证" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility', tid=team.id, csrf=csrf_token()) }}">触发</a>).
 资格认证已 <strong>{{ "锁定" if team.eligibility_locked else "开启" }}</strong> (<a href="{{ url_for('admin.admin_toggle_eligibility_lock', tid=team.id, csrf=csrf_token()) }}">触发</a>).
 </p>
 <p>这个队伍隶属于 <strong>{{ team.affiliation }}</strong></p>
-<h3>队长</h3>
+<h4>队长</h4>
 <p>这个队伍的队长是： <strong>{{ team.email }} {{ team.team_leader.username }}</strong>.</p>
 <br>
-<h3>分数调整</h3>
+<h4>分数调整</h4>
 <form action="{{ url_for('admin.admin_score_adjust', tid=team.id) }}" method="POST">
     <div class="input-field">
         <input required type="number" name="value" id="value" />
@@ -23,7 +22,7 @@
     <button class="btn waves-effect waves-light" type="submit">调整</button>
 </form>
 <br></br>
-<h3>计算分数</h3>
+<h4>计算分数</h4>
 {% if team.solves.count() %}
 <h4>解决的题目</h4>
 <table>

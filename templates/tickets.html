@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Trouble Tickets{% endblock %}
 {% block content %}
-<h2>Trouble tickets</h2>
+<h4>Trouble tickets</h4>
 {% if tickets %}
 你已经创建了以下tickets. 如果你还有问题, 你可以 <a href="{{ url_for('open_ticket') }}">创建一个新的ticket</a>.
 <div class="collection">

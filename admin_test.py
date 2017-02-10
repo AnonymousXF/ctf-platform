@@ -18,25 +18,6 @@ r = random.SystemRandom()
 secret = "".join([r.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for i in range(16)])
 pwhash = utils.admin.create_password(TEST_ADMIN_PASSWORD)
 
-class BasicTestCase(unittest.TestCase):
-	def setUp(self):
-		app.config['TESTING'] = True
-		self.app = app.test_client()
-		os.system('python ctftool create-tables')
-		
-
-	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
-		[i.drop_table() for i in tables]
-
-	def test_index(self):
-		response = self.app.get('/admin/', content_type = 'html/text',follow_redirects=True)
-		self.assertEqual(200, response.status_code)
-
-	def test_databse(self):
-		tester = os.path.exists("dev.db")
-		self.assertTrue(tester)
-
 class FlaskrTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
@@ -57,7 +38,18 @@ class FlaskrTestCase(unittest.TestCase):
 	
 	def logout(self):
 		return self.app.get('/admin/logout/',follow_redirects = True)
-	
+
+	def test_root(self):
+		response = self.app.get('/admin/', content_type = 'html/text',follow_redirects=True)
+		self.assertEqual(200, response.status_code)
+		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
+		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		self.assertIn(TEST_ADMIN_NAME, rv.data)
+		rv = self.app.get('/admin/', content_type = 'html/text',follow_redirects=True)
+		self.assertIn(TEST_ADMIN_NAME, rv.data)
+		rv = self.logout()
+		self.assertIn(b'登录',rv.data)
+
 	def test_login_and_logout(self):
 		# create admin
 		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
@@ -71,7 +63,21 @@ class FlaskrTestCase(unittest.TestCase):
 		self.assertIn(b'You have made a terrible mistake.', rv.data)
 		rv = self.login(TEST_ADMIN_NAME+'111', TEST_ADMIN_PASSWORD+'111')
 		self.assertIn(b'You have made a terrible mistake.', rv.data)
-	
+		# if admin_username in serects
+		f = open("secrets",'a+')
+		f.write("\nadmin_username: admin\nadmin_password: admin")
+		f.close
+		rv = self.login('admin', 'admin')
+		self.assertIn('admin', rv.data)
+		f = open("secrets",'w+')
+		f.truncate()
+		f.write("mailgun_url: https://api.mailgun.net/v3/sandboxeb3737e47fe647d49f550d2c2639dfcf.mailgun.org\n")
+		f.write("mailgun_key: key-3c8c7ea77b5a2d71607c4b0bdcd656cc\n")
+		f.write("recaptcha_key: asdlkfjhasdlkjfhlsdakjfh\n")
+		f.write("recaptcha_secret: sdakjfhsdalkfjhsdalkfjh\n")
+		f.write("key: nana")
+		f.close
+
 	def test_login_dashboard(self):
 		# create admin
 		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
@@ -82,7 +88,6 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
 		self.assertIn(TEST_ADMIN_NAME, rv.data)
 		rv = self.app.get('/admin/dashboard/',follow_redirects = True)
-		print(rv.data)
 		self.assertIn('待审核队伍', rv.data)
 
 	#test /team_add/
@@ -93,7 +98,6 @@ class FlaskrTestCase(unittest.TestCase):
 		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
 		data = dict(user_name = 'user', user_pwd = 'nana', _csrf_token = csrf_token)
 		rv = self.app.post('/login/',data = data,follow_redirects=True)
-		print(rv.data)
 		data = dict(team_name = 'test',
 					affiliation = 'hust',
 					team_eligibility = True,
@@ -101,13 +105,36 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.app.post('/team_register/',data = data, follow_redirects = True)
 		self.assertIn(b'The request has send to admin.',rv.data)
 		self.app.get('/logout/',follow_redirects = True)
-		# admin add the team
+		# only choose one
 		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
 		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
-		print(rv.data)
 		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
-		rv = self.app.post('/admin/team_add/', data=dict(test='checked', _csrf_token=csrf_token), follow_redirects = True)
+		rv = self.app.post('/admin/team_add/', data=dict(a1='checked', a1a='checked', _csrf_token=csrf_token), follow_redirects = True)
+		self.assertIn(b'You can only choose one!',rv.data)
+		self.logout()
+		# reject
+		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/admin/team_add/', data=dict(a1a='checked', _csrf_token=csrf_token), follow_redirects = True)
+		self.assertIn(b'reject',rv.data)
+		self.logout()
+		# agree
+		html = self.app.get('/login/',follow_redirects=True).data
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
+		data = dict(user_name = 'user', user_pwd = 'nana', _csrf_token = csrf_token)
+		rv = self.app.post('/login/',data = data,follow_redirects=True)
+		data = dict(team_name = 'test',
+					affiliation = 'hust',
+					team_eligibility = True,
+					_csrf_token = csrf_token)
+		rv = self.app.post('/team_register/',data = data, follow_redirects = True)
+		self.assertIn(b'The request has send to admin.',rv.data)
+		self.app.get('/logout/',follow_redirects = True)
+		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',rv.data)[0]
+		rv = self.app.post('/admin/team_add/', data=dict(a1='checked', _csrf_token=csrf_token), follow_redirects = True)
 		self.assertIn(b'agree',rv.data)
+		self.logout()
 
 	def test_login_tickets(self):
 		# create admin
@@ -207,7 +234,6 @@ class FlaskrTestCase(unittest.TestCase):
 				self.assertIn('计算分数', rv.data)
 				# test /team/<int:tid>/<csrf>/toggle_eligibility/
 				rv = self.app.get('/admin/team/'+str(team.id)+'/'+csrf+'/toggle_eligibility/', follow_redirects = True)
-				print(rv.data)
 				self.assertIn('Eligibility set to', rv.data)
 				# test /team/<int:tid>/<csrf>/toggle_eligibility_lock/
 				rv = self.app.get('/admin/team/'+str(team.id)+'/'+csrf+'/toggle_eligibility_lock/', follow_redirects = True)
@@ -218,6 +244,30 @@ class FlaskrTestCase(unittest.TestCase):
 				self.assertIn('Score adjusted.', rv.data)
 		except Team.DoesNotExist:
 			pass
+
+	def test_login_notice(self):
+		# create admin
+		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
+		# not login
+		rv = self.app.get('/admin/notice/', follow_redirects=True)
+		self.assertIn('You must be an admin to access that page.', rv.data)
+		#login
+		self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		rv = self.app.get('/admin/notice/', follow_redirects=True)
+		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
+		self.assertIn('发布通知', rv.data)
+		#publish a notice
+		TEST_TITLE = "Test Title"
+		TEST_CONTENT = "Test Content"
+		data = dict(title=TEST_TITLE,content=TEST_CONTENT,_csrf_token = csrf)
+		rv = self.app.post('/admin/notice/',data=data,follow_redirects=True)
+		self.assertIn("Publish Success!", rv.data)
+		#paginate test
+		for i in range(8):
+			data = dict(title=TEST_TITLE+'_'+str(i),content=TEST_CONTENT+'_'+str(i),_csrf_token = csrf)
+			self.app.post('/admin/notice/', data=data, follow_redirects=True)
+		rv = self.app.get('/admin/notice/?page=2', follow_redirects=True)
+		self.assertNotIn(TEST_TITLE+'_', rv.data)
 
 if __name__ == '__main__':
 	unittest.main()

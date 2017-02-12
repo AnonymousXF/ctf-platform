@@ -28,6 +28,7 @@ static_prefix = "http://127.0.0.1/tjctf-static/"
 static_dir = "{}/static/".format(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 custom_stylesheet = "tjctf.css"
 
+interval = 1
 competition_begin = datetime(1970, 1, 1, 0, 0)
 competition_end = datetime(2018, 1, 1, 0, 0)
 

@@ -91,8 +91,8 @@ def scoreboard():
         if config.immediate_scoreboard:
             data = utils.scoreboard.calculate_scores()
             graphdata = utils.scoreboard.calculate_graph(data)
-            utils.cache.set_complex("scoreboard", data, 120)
-            utils.cache.set_complex("graph", graphdata, 120)
+            utils.cache.set_complex("scoreboard", data, config.interval)
+            utils.cache.set_complex("graph", graphdata, config.interval)
         else:
             return "No scoreboard data available. Please contact an organizer."
 
@@ -424,7 +424,7 @@ def dashboard():
         g.user.username = user_name
         g.user.email = user_email
 
-        g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), 120)
+        g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), config.interval)
 
         if email_changed:
             if not sendemail.is_valid_email(user_email):

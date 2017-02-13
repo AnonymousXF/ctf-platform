@@ -33,7 +33,10 @@
                             {% if logged_in %}
                             <li><a href="{{ url_for('challenges') }}"><font size="5px">题目</font></a></li>
                             {% endif %}
-                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">分数板</font></a></li>
+                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">排名</font></a></li>
+                            {% if logged_in %}
+                            <li><a href="{{ url_for('dynamic_display') }}"><font size="5px">动态</font></a></li>
+                            {% endif %}
                             {% endif %}
                             {% if logged_in %}
                             <li><a href="{{ url_for('team_tickets') }}"><font size="5px">Tickets</font></a></li>
@@ -49,7 +52,7 @@
                             {% if logged_in %}
                             <li><a href="{{ url_for('logout') }}"><font size="5px">注销</font></a></li>
                             <!-- Dropdown Trigger -->
-                            <li><a class="dropdown-button" href="{{ url_for('team_dashboard') }}" data-activates="dropdown1"><font size="5px">{{ user.username }}</font><i class="mdi-navigation-arrow-drop-down right"></i></a></li>
+                            <li><a class="dropdown-button" href="{{ url_for('team_dashboard') }}" data-activates="dropdown1"><font size="5px">{{ user.username }}</font><i class="material-icons right">arrow_drop_down</i></a></li>
                             {% endif %}
                             {% if not logged_in %}
                             {% if config.registration %}
@@ -67,7 +70,10 @@
                             {% if logged_in %}
                             <li><a href="{{ url_for('challenges') }}"><font size="5px">题目</font></a></li>
                             {% endif %}
-                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">分数板</font></a></li>
+                            <li><a href="{{ url_for('scoreboard') }}"><font size="5px">排名</font></a></li>
+                            {% if logged_in %}
+                            <li><a href="{{ url_for('dynamic_display') }}"><font size="5px">动态</font></a></li>
+                            {% endif %}
                             {% endif %}
                             {% if logged_in %}
                             <li><a href="{{ url_for('team_tickets') }}"><font size="5px">Tickets</font></a></li>

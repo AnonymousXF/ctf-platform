@@ -245,5 +245,29 @@ class FlaskrTestCase(unittest.TestCase):
 		except Team.DoesNotExist:
 			pass
 
+	def test_login_notice(self):
+		# create admin
+		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
+		# not login
+		rv = self.app.get('/admin/notice/', follow_redirects=True)
+		self.assertIn('You must be an admin to access that page.', rv.data)
+		#login
+		self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		rv = self.app.get('/admin/notice/', follow_redirects=True)
+		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
+		self.assertIn('发布通知', rv.data)
+		#publish a notice
+		TEST_TITLE = "Test Title"
+		TEST_CONTENT = "Test Content"
+		data = dict(title=TEST_TITLE,content=TEST_CONTENT,_csrf_token = csrf)
+		rv = self.app.post('/admin/notice/',data=data,follow_redirects=True)
+		self.assertIn("Publish Success!", rv.data)
+		#paginate test
+		for i in range(8):
+			data = dict(title=TEST_TITLE+'_'+str(i),content=TEST_CONTENT+'_'+str(i),_csrf_token = csrf)
+			self.app.post('/admin/notice/', data=data, follow_redirects=True)
+		rv = self.app.get('/admin/notice/?page=2', follow_redirects=True)
+		self.assertNotIn(TEST_TITLE+'_', rv.data)
+
 if __name__ == '__main__':
 	unittest.main()

@@ -69,8 +69,9 @@ class ChallengeFailure(BaseModel):
     time = DateTimeField()
 
 class NewsItem(BaseModel):
-    summary = CharField()
-    description = TextField()
+    title = CharField()
+    content = TextField()
+    time = DateTimeField()
 
 class TroubleTicket(BaseModel):
     team = ForeignKeyField(Team, related_name='tickets')

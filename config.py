@@ -1,17 +1,17 @@
 import os
 from datetime import datetime
 
-ctf_name = "TJCTF"
+ctf_name = "HUSTCTF"
 #IRC Channel
 ctf_chat_channel = "#tjctf"
 ctf_home_url = "http://tjctf.org"
 eligibility = "In order to be eligible for prizes, all members of your team must be in high school, and you must not have more than four team members."
 tagline = "a cybersecurity competition created by TJHSST students"
 
-cdn = True
+cdn = False
 apisubmit = True
 registration = True
-debug = False
+debug = True
 proxied_ip_header = "X-Forwarded-For"
 
 flag_rl = 5
@@ -38,9 +38,9 @@ resume_server = "https://resumes.tjctf.org"
 
 disallowed_domain = "tjctf.org"
 
-email_sender = 'hustctf@163.com'
-email_pass = 'Hu5tCTF2o17'
-email_host = 'smtp.163.com'
+email_sender = os.environ.get('MAIL_USERNAME')
+email_pass = os.environ.get('MAIL_PASSWORD')
+email_host = os.environ.get('MAIL_HOST')
 
 def competition_is_running():
     return competition_begin < datetime.now() < competition_end

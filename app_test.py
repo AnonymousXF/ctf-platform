@@ -10,9 +10,10 @@ import redis
 import time
 import random
 import utils
+from datetime import datetime
 
 USER_NAME = 'user'
-USER_EMAIL = '358693294@qq.com'
+USER_EMAIL = '464059291@qq.com'
 USER_PASSWORD = '123456ASD'
 r = random.SystemRandom()
 secret = "".join([r.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for i in range(16)])
@@ -42,7 +43,7 @@ class BasicTestCase(unittest.TestCase):
 	def test_index(self):
 		#/scoreboard/
 		response = self.app.get('/', content_type = 'html/text',follow_redirects=True)
-		self.assertIn('计分板', response.data)
+		self.assertIn('队伍积分', response.data)
 
 	def test_databse(self):
 		tester = os.path.exists("dev.db")
@@ -71,7 +72,7 @@ class FlaskrTestCase(unittest.TestCase):
 					pwd_confirmed = pwd_confirmed,
 					_csrf_token = csrf_token)
 		return self.app.post('/register/',data = data, follow_redirects = True), csrf_token
-	
+
 	# Test Register Function
 	def test_register_and_confirm_email_and_update_information(self):
 		if config.registration == True:
@@ -161,7 +162,7 @@ class FlaskrTestCase(unittest.TestCase):
 		else:
 			rv = self.app.get('/register/',follow_redirects=True)
 			self.assertEqual(rv.data, b'抱歉，现在暂时无法注册。有问题请联系hustctf@163.com')
-	
+
 	def login(self, user_name, user_pwd):
 		#Get csrf_token
 		html = self.app.get('/login/',follow_redirects=True).data
@@ -371,7 +372,7 @@ class FlaskrTestCase(unittest.TestCase):
 		TeamMember.create(team=team, member=user, member_confirmed=True)
 		rv = self.login(USER_NAME,USER_PASSWORD)
 		rv = self.app.get('/challenges/',data=dict(_csrf_token=csrf_token),follow_redirects=True)
- 		self.assertIn(b'折叠题目',rv.data)
+ 		self.assertIn(b'收起题目',rv.data)
 
 	def test_challenge_submit(self):
 		#Create a test challenge
@@ -521,6 +522,33 @@ class FlaskrTestCase(unittest.TestCase):
 		data = dict(user_name = 'test', _csrf_token = csrf_token)
 		rv = self.app.post('/forget_pwd/',data = data,follow_redirects=True)
 		self.assertIn(b'Your email has not confirmed,you can input the confirmed code in your email',rv.data)
+
+	#test dynamic_display
+	def test_dynamic_display(self):
+		# Create a notice
+		NewsItem.create(title="TestTitle", content="TestContent", time=datetime.now())
+		# Create a test challenge
+		chal = Challenge.create(name="Challenge Test", category="Test", description="Test", points=100, flag="Test",
+								author="Test")
+		r = redis.StrictRedis()
+		r.hset("solves", chal.id, chal.solves.count())
+		# join a team
+		User.create(username=USER_NAME, password=pwhash, email='56565@qq.com', email_confirmed=True,
+					email_confirmation_key='12345678956565')
+		user = User.get(User.username == USER_NAME)
+		team = Team.create(name='test1', affiliation='hust', eligible=True, team_leader=user, team_confirmed=True)
+		TeamMember.create(team=team, member=user, member_confirmed=True)
+		rv = self.login(USER_NAME, USER_PASSWORD)
+		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
+		#GET Method----notice
+		rv = self.app.get('/dynamic_display/', follow_redirects=True)
+		self.assertIn("TestTitle",rv.data)
+		#GET Method----dynamics
+		flag = dict(flag="Test", _csrf_token=csrf_token)
+		rv = self.app.post('/submit/{}/'.format(chal.id), data = flag, follow_redirects=True)
+		self.assertIn(b'Success!',rv.data)
+		rv = self.app.get('/dynamic_display/', follow_redirects=True)
+		self.assertIn("Success", rv.data)
 
 if __name__ == '__main__':
 	unittest.main()

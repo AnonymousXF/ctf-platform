@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, session, redirect, url_for, request, g, flash, jsonify
+from flask_paginate import Pagination,get_page_args
 app = Flask(__name__)
 
-from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, db
+from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem, db
 from datetime import datetime
 from peewee import fn
 
-from utils import user, decorators, flag, cache, misc, sendemail
+from utils import user, decorators, flag, cache, misc, sendemail,dynamics
 import utils.scoreboard
 
 import config
@@ -490,6 +491,30 @@ def teamconfirm():
             return "invalid", 403
     else:
         return "unauthorized", 401
+
+@app.route('/dynamic_display/')
+@decorators.competition_running_required
+@decorators.confirmed_email_required
+def dynamic_display():
+    chal_failed = ChallengeFailure.select()
+    chal_solved = ChallengeSolve.select()
+    submits = dynamics.sort(chal_failed,chal_solved)
+    results = dynamics.handle_solving(submits)
+
+    result = []
+    page,per_page,offset=get_page_args()
+    if int(page) == int(len(results)/per_page) + 1:
+        for i in range((page-1)*per_page, len(results)):
+            if results[i] is not None:
+                result.append(results[i])
+    else:
+        for i in range((page-1)*per_page, page*per_page):
+            if results[i] is not None:
+                result.append(results[i])
+    pagination = Pagination(page=page,total=len(results),per_page=per_page,record_name='result')
+
+    notices = NewsItem.select().order_by(-NewsItem.time)
+    return render_template("dynamics.html", notices=notices, result=result, pagination=pagination)
 
 @app.route('/challenges/')
 @decorators.must_be_allowed_to("view challenges")

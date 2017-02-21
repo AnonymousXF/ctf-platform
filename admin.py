@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from database import AdminUser, User, TeamMember, TeamAccess, Team, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification
+from flask_paginate import Pagination,get_page_args
+from database import AdminUser, User, TeamMember, TeamAccess, Team, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem
 import utils
 import utils.admin
 import utils.scoreboard
@@ -77,6 +78,25 @@ def admin_dashboard():
     lastsolvedata = utils.scoreboard.get_last_solves(team_confirmed, solves)
     tickets = list(TroubleTicket.select().where(TroubleTicket.active == True))
     return render_template("admin/dashboard.html", team_notconfirmed_leader=team_notconfirmed_leader, team_confirmed=team_confirmed, team_notconfirmed=team_notconfirmed,scoredata=scoredata, lastsolvedata=lastsolvedata, tickets=tickets)
+
+@admin.route("/notice/", methods=["GET", "POST"])
+@admin_required
+def admin_notice():
+    if request.method == "POST":
+        title = request.form["title"]
+        content = request.form["content"]
+        publish_time = datetime.now()
+        notice = NewsItem.create(title=title, content=content, time=publish_time)
+        flash("Publish Success!")
+        return redirect(url_for("admin.admin_notice"))
+    else:
+        all_record_num = NewsItem.select().count()
+        page, per_page, offset = get_page_args()
+        per_page = 8
+        notices = NewsItem.select().order_by(-NewsItem.time).paginate(page, per_page)
+        pagination = Pagination(page=page, total=all_record_num, per_page=per_page, record_name='notices',
+                                format_total=True, format_number=True)
+        return render_template("admin/notice.html",notices=notices, pagination=pagination)
 
 @admin.route("/tickets/")
 @admin_required

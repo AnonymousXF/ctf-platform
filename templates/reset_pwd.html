@@ -4,7 +4,7 @@
 <!--<script src='https://www.google.com/recaptcha/api.js'></script>-->
 {% endblock %}
 {% block content %}
-<h3>修改密码</h3>
+<h4>修改密码</h4>
 <form action="{{ url_for('reset_pwd') }}" method="POST">
     <div class="input-field">
         <input required maxlength="100" id="user-pwd" name="user_pwd" type="password" />

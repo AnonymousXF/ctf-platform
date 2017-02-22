@@ -9,6 +9,7 @@ from utils.decorators import admin_required, csrf_check
 from utils.notification import make_link
 from datetime import datetime
 from config import secret
+import redis
 
 admin = Blueprint("admin", "admin", url_prefix="/admin")
 
@@ -77,7 +78,8 @@ def admin_dashboard():
     scoredata = utils.scoreboard.get_all_scores(team_confirmed, solves, adjustments)
     lastsolvedata = utils.scoreboard.get_last_solves(team_confirmed, solves)
     tickets = list(TroubleTicket.select().where(TroubleTicket.active == True))
-    return render_template("admin/dashboard.html", team_notconfirmed_leader=team_notconfirmed_leader, team_confirmed=team_confirmed, team_notconfirmed=team_notconfirmed,scoredata=scoredata, lastsolvedata=lastsolvedata, tickets=tickets)
+    challenges = Challenge.select()
+    return render_template("admin/dashboard.html", team_notconfirmed_leader=team_notconfirmed_leader, team_confirmed=team_confirmed, team_notconfirmed=team_notconfirmed,scoredata=scoredata, lastsolvedata=lastsolvedata, tickets=tickets, challenges=challenges)
 
 @admin.route("/notice/", methods=["GET", "POST"])
 @admin_required
@@ -134,6 +136,52 @@ def admin_ticket_comment(ticket):
 
     return redirect(url_for(".admin_ticket_detail", ticket=ticket.id))
 
+@admin.route("/challenge/<int:tid>", methods=["GET", "POST"])
+@admin_required
+def admin_edit_challenge(tid):
+    if request.method == "GET":
+        challenge = Challenge.get(Challenge.id == tid)
+        return render_template("admin/challenge.html", challenge=challenge)
+    else:
+        challenge = Challenge.get(Challenge.id == tid)
+        challenge.name = request.form["challenge_name"].strip()
+        challenge.category = request.form["challenge_category"].strip()
+        challenge.author = request.form["challenge_author"].strip()
+        challenge.description = request.form["challenge_des"].strip()
+        challenge.points = int(request.form["challenge_points"])
+        challenge.flag = request.form["challenge_flag"].strip()
+        challenge.enabled = "challenge_enabled" in request.form
+        challenge.save()
+        r = redis.StrictRedis()
+        for chal in Challenge.select():
+            r.hset("solves", chal.id, chal.solves.count())
+        flash("change successfully.")
+        return redirect(url_for('.admin_dashboard'))
+
+@admin.route("/challenge/add/", methods=["GET", "POST"])
+@admin_required
+def admin_add_challenge():
+    if request.method == "GET":
+        return render_template("admin/challenge_add.html")
+    else:
+        challenge_name = request.form["challenge_name"].strip()
+        challenge_category = request.form["challenge_category"].strip()
+        challenge_author = request.form["challenge_author"].strip()
+        challenge_des = request.form["challenge_des"].strip()
+        challenge_points = int(request.form["challenge_points"])
+        challenge_flag = request.form["challenge_flag"].strip()
+        if "challenge_enabled" in request.form:
+            challenge_enabled = True
+        else:
+            challenge_enabled = False
+        Challenge.create(name=challenge_name,category=challenge_category,author=challenge_author,description=challenge_des
+            ,points=challenge_points,flag=challenge_flag,enabled=challenge_enabled)
+        r = redis.StrictRedis()
+        for chal in Challenge.select():
+            r.hset("solves", chal.id, chal.solves.count())
+        flash("create successfully.")
+        return redirect(url_for('.admin_dashboard'))
+
 @admin.route("/team/<int:tid>/")
 @admin_required
 def admin_show_team(tid):
@@ -165,12 +213,9 @@ def admin_toggle_eligibility_lock(tid):
 def admin_score_adjust(tid):
     value = int(request.form["value"])
     reason = request.form["reason"]
-
     team = Team.get(Team.id == tid)
-
     ScoreAdjustment.create(team=team, value=value, reason=reason)
     flash("Score adjusted.")
-
     return redirect(url_for(".admin_show_team", tid=tid))
 
 @admin.route("/logout/")

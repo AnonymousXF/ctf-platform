@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<p4>新建题目</p4>
+<br></br>
+<form action="{{ url_for('admin.admin_add_challenge') }}" method="POST">
+    <div class="row">
+        <div class="input-field">
+            <input required maxlength="100" style="text-valign:middle" id="challenge-name" name="challenge_name" type="text" />
+            <label for="challenge-name" style="text-valign:middle">题目名</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="100" style="text-valign:middle" id="challenge-category" name="challenge_category" type="text" />
+            <label for="challenge-category" style="text-valign:middle">类别</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="100" style="text-valign:middle" id="challenge-author" name="challenge_author" type="text" />
+            <label for="challenge-author" style="text-valign:middle">作者</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="100" style="text-valign:midle" id="challenge-des" name="challenge_des" type="text" />
+            <label for="challenge-des" style="text-valign:middle">描述</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="100" style="text-valign:midle" id="challenge-points" name="challenge_points" type="number"/>
+            <label for="challenge-points" style="text-valign:middle">分值</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="100" style="text-valign:midle" id="challenge-flag" name="challenge_flag" type="number" />
+            <label for="challenge-flag" style="text-valign:middle">flag</label>
+        </div>
+        <input style="text-valign:midle" id="challenge-enabled" name="challenge_enabled" type="checkbox"/>
+        <label for="challenge-enabled" style="text-valign:middle">题目开启</label>
+        <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
+        <div align="center"><button class="btn waves-effect waves-light" type="submit">确定</button></div>
+    </div>
+</form>
+{% endblock %}

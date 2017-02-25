@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<p4>编辑虚拟机</p4>
+<br></br>
+<form action="{{ url_for('admin.admin_edit_vmachine', tid=vmachine.id) }}" method="POST">
+    <div class="row">
+    <div class="col s10 offset-s1">
+        <div class="input-field">
+            <input required maxlength="50" style="text-valign:middle" id="vmachine-name" name="vmachine_name" type="text" value="{{ vmachine.name }}" readonly/>
+            <label for="vmachine-name" style="text-valign:middle">虚拟机名</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="50" style="text-valign:middle" id="vmachine-memory" name="vmachine_memory" type="number" step="1" value="{{ vmachine.memory }}"/>
+            <label for="challenge-category" style="text-valign:middle">内存</label>
+        </div>
+        <div class="input-field">
+            <input required maxlength="50" style="text-valign:middle" id="vmachine-cpu" name="vmachine_cpu" type="number" step="1" min="1" max="4" value="{{ vmachine.cpu }}"/>
+            <label for="vmachine-cpu" style="text-valign:middle">cpu数</label>
+        </div>
+        <p>
+            <input name="vmachine_status" value="running" type="radio" id="vmachine-running" {% if running %} checked="on" {% endif %} /{% if suspend %} disabled="disabled" {% endif %}>
+            <label for="vmachine-running">运行</label>
+        </p>
+        <p>
+            <input name="vmachine_status" value="suspend" type="radio" id="vmachine-suspend" {% if suspend %} checked="on" {% endif %} {% if shutdown %} disabled="disabled" {% endif %}/>
+            <label for="vmachine-suspend">挂起</label>
+        </p>
+        <p>
+            <input name="vmachine_status" value="resume" type="radio" id="vmachine-resume" {% if not suspend %} disabled="disabled" {% endif %}/>
+            <label for="vmachine-resume">恢复</label>
+        </p>
+        <p>
+            <input name="vmachine_status" value="shutdown" type="radio" id="vmachine-shutdown" {% if shutdown %} checked="on" {% endif %} {% if suspend %} disabled="disabled" {% endif %} />
+            <label for="vmachine-shutdown">关机</label>
+        </p>
+        <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+        <div align="center"><button class="btn waves-effect waves-light" type="submit">修改虚拟机</button></div>
+    </div>
+    </div>
+</form>
+{% endblock %}

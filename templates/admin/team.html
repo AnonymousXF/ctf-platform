@@ -22,13 +22,6 @@
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
     <button class="btn waves-effect waves-light" type="submit">调整</button>
 </form>
-<!-- <h4>分数调整</h4>
-<form action="{{ url_for('admin.admin_score_adjust',tid=team.id) }}" method="POST">
-    <div class="input-field">
-        <input required maxlength="100" style="text-valign:middle" id="value" name="value" type="text" />
-        <label for="value" style="text-valign:middle">分值</label>
-    </div>
-</form> -->
 <br></br>
 <h4>计算分数</h4>
 {% if team.solves.count() %}

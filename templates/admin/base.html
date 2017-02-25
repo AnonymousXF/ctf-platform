@@ -24,6 +24,7 @@
                             <li><a href="{{ url_for('admin.admin_dashboard') }}"><font size="5px">主页面</a></li>
                             <li><a href="{{ url_for('admin.admin_tickets') }}"><font size="5px">Tickets</a></li>
                             <li><a href="{{ url_for('admin.admin_notice') }}"><font size="5px">通知</a></li>
+                            <li><a href="{{ url_for('admin.admin_challenge') }}"><font size="5px">题目</a></li>
                         </ul>
                         <a href="#" class="center brand-logo">{{ config.ctf_name }} 管理员</a>
                         <ul class="right hide-on-med-and-down">
@@ -32,6 +33,8 @@
                         <ul id="nav-mobile" class="side-nav">
                             <li><a href="{{ url_for('admin.admin_dashboard') }}"><font size="5px">主页面</a></li>
                             <li><a href="{{ url_for('admin.admin_tickets') }}"><font size="5px">Tickets</a></li>
+                            <li><a href="{{ url_for('admin.admin_notice') }}"><font size="5px">通知</a></li>
+                            <li><a href="{{ url_for('admin.admin_challenge') }}"><font size="5px">题目</a></li>
                             <hr />
                             <li><a href="{{ url_for('admin.admin_logout') }}"><font size="5px">注销 ({{ session.admin }})</a></li>
                         </ul>

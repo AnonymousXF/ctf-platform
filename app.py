@@ -94,6 +94,7 @@ def scoreboard():
             graphdata = utils.scoreboard.calculate_graph(data)
             utils.cache.set_complex("scoreboard", data, config.interval)
             utils.cache.set_complex("graph", graphdata, config.interval)
+            app.logger.info("visit scoreboard")
         else:
             return "No scoreboard data available. Please contact an organizer."
 
@@ -252,7 +253,7 @@ def register():
 
         session["user_id"] = user.id
         flash("register successfully.")
-        return redirect(url_for('team_dashboard'))
+        return redirect(url_for('dashboard'))
 
 @app.route('/logout/')
 def logout():

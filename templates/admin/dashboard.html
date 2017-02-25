@@ -66,28 +66,4 @@
 </div>
 </div>
 </form>
-<br></br>
-<h4>管理题目</h4>
-<div class="row">
-<div class="col s10 offset-s1">
-<table class="sortable">
-    <thead>
-        <tr><th>题目名</th><th>题目类型</th><th>状态</th><th>分值</th></th>
-    </thead>
-    <tbody>
-        {% for challenge in challenges %}
-        <tr>
-            <td>
-                <a href="{{ url_for('admin.admin_edit_challenge', tid=challenge.id) }}">{{ challenge.name }}</a>
-            </td>
-            <td>{{ challenge.category }}</td>
-            <td>{{ challenge.enabled }}</td>
-            <td>{{ challenge.points }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<br></br>
-<a href="{{ url_for('admin.admin_add_challenge') }}"><div align="center"><button class="btn waves-effect waves-light" type="submit">新建题目</button></div></a>
-<br></br>
 {% endblock %}

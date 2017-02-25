@@ -14,7 +14,7 @@ import utils
 import utils.admin
 import yaml
 
-tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 
 operation = sys.argv[1]
 if operation == "create-tables":
@@ -32,6 +32,7 @@ elif operation == "add-challenge":
     challengefile = sys.argv[2]
     with open(challengefile) as f:
         chal = Challenge.create(**yaml.load(f))
+        Vmanager.create(name=chal.name,memory=0,cpu=0,status="Not existing")
         print("Challenge added with id {}".format(chal.id))
 
 elif operation == "gen-challenge":
@@ -60,7 +61,7 @@ elif operation == "add-admin":
     r = random.SystemRandom()
     secret = "".join([r.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for i in range(16)])
     AdminUser.create(username=username, password=pwhash, secret=secret)
-    print("AdminUser created; Enter the following key into your favorite TOTP application (Google Authenticator Recommended): {}".format(secret))
+    print("AdminUser created")
 
 elif operation == "scan":
     path = sys.argv[2]
@@ -106,6 +107,7 @@ elif operation == "scan":
                     q.execute()
                 else:
                     Challenge.create(**data)
+                    Vmanager.create(name=data["name"],memory=0,cpu=0,status="Not existing")
 
     print(n, "challenges loaded")
 

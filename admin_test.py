@@ -11,6 +11,7 @@ from datetime import datetime
 import random
 import utils.admin
 
+Vname = '1-name'
 config.debug=True
 TEST_ADMIN_NAME = 'nana'
 TEST_ADMIN_PASSWORD = 'nana'
@@ -22,10 +23,11 @@ class FlaskrTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		os.system('python ctftool create-tables')
+		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		[i.create_table() for i in tables]
 
 	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 
 	def login(self, username, password):
@@ -268,6 +270,169 @@ class FlaskrTestCase(unittest.TestCase):
 			self.app.post('/admin/notice/', data=data, follow_redirects=True)
 		rv = self.app.get('/admin/notice/?page=2', follow_redirects=True)
 		self.assertNotIn(TEST_TITLE+'_', rv.data)
+
+	def test_login_challenge(self):
+		# create admin
+		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
+		# not login
+		rv = self.app.get('/admin/challenge/', follow_redirects=True)
+		self.assertIn('You must be an admin to access that page.', rv.data)
+		#login test challenge.html
+		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
+		rv = self.app.get('/admin/challenge/', follow_redirects=True)
+		self.assertIn('管理题目', rv.data)
+		# test add_challenge
+		correct_data=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data1=dict(challenge_name='',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data2=dict(challenge_name='test',challenge_category='',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data3=dict(challenge_name='test',challenge_category='Web',challenge_author='',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data4=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data5=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data6=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='',_csrf_token = csrf)
+		wrong_data7=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='aaa',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data1, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data2, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data3, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data4, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data5, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data6, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=wrong_data7, follow_redirects=True)
+		self.assertIn("points must be digital.", rv.data)
+		rv = self.app.post('/admin/challenge/add/', data=correct_data, follow_redirects=True)
+		self.assertIn("create successfully.", rv.data)
+		# test edit_challeng
+		challenge = Challenge.get(Challenge.name=='test')
+		rv = self.app.get('/admin/challenge/'+str(challenge.id)+'/',follow_redirects=True)
+		self.assertIn('test', rv.data)
+		correct_data=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data2=dict(challenge_name='test',challenge_category='',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data3=dict(challenge_name='test',challenge_category='Web',challenge_author='',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data4=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data5=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		wrong_data6=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='',_csrf_token = csrf)
+		wrong_data7=dict(challenge_name='test',challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='aaa',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=wrong_data2, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=wrong_data3, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=wrong_data4, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=wrong_data5, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=wrong_data6, follow_redirects=True)
+		self.assertIn("not null,create failed.", rv.data)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=wrong_data7, follow_redirects=True)
+		self.assertIn("points must be digital.", rv.data)
+		rv = self.app.post('/admin/challenge/'+str(challenge.id)+'/', data=correct_data, follow_redirects=True)
+		self.assertIn("change successfully.", rv.data)
+
+	def test_login_vmachine(self):
+		# create admin
+		AdminUser.create(username=TEST_ADMIN_NAME, password=pwhash, secret=secret)
+		# not login
+		rv = self.app.get('/admin/challenge/', follow_redirects=True)
+		self.assertIn('You must be an admin to access that page.', rv.data)
+		#login test challenge.html
+		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
+		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
+		rv = self.app.get('/admin/challenge/', follow_redirects=True)
+		self.assertIn('连接服务器', rv.data)
+		# test get_url 
+		# wrong url
+		rv = self.app.post('/admin/geturl/', data=dict(url="qemu://127.0.0.1/system",_csrf_token = csrf), follow_redirects=True)
+		self.assertIn("连接服务器", rv.data)
+		# correct url
+		rv = self.app.post('/admin/geturl/', data=dict(url="qemu:///system",_csrf_token = csrf), follow_redirects=True)
+		self.assertIn("虚拟机名", rv.data)
+		correct_data=dict(challenge_name=Vname,challenge_category='Web',challenge_author='nana',challenge_des=\
+			'test,test,test',challenge_points='120',challenge_flag='flag{whatever}',_csrf_token = csrf)
+		rv = self.app.post('/admin/challenge/add/', data=correct_data, follow_redirects=True)
+		self.assertIn("create successfully.", rv.data)
+		rv = self.app.get('/admin/connection/', follow_redirects=True)
+		self.assertIn('虚拟机名', rv.data)
+		# edit vmachine
+		vmachine = Vmachine.get(Vmachine.name==Vname)
+		rv = self.app.get('/admin/vmachine/'+str(vmachine.id)+'/', follow_redirects=True)
+		self.assertIn('修改虚拟机', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status ='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('shutdown', rv.data)
+		data = dict(vmachine_memory='10aa',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('must be digital', rv.data)
+		data = dict(vmachine_memory='1025',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('1025', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('1024', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='a',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('must be digital', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='0',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('cpu should between 1 and 4', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='5',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('cpu should between 1 and 4', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='2',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('2', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('1', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='suspend',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('error', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='resume',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('error', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='running',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('running', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='resume',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('error', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='suspend',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('suspend', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('error', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='running',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('error', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='resume',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('running', rv.data)
+		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
+		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
+		self.assertIn('shutdown', rv.data)
+
+
+
 
 if __name__ == '__main__':
 	unittest.main()

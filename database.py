@@ -54,6 +54,12 @@ class Challenge(BaseModel):
     enabled = BooleanField(default=True)
     flag = TextField()
 
+class Vmachine(BaseModel):
+    name = CharField()
+    memory = IntegerField()
+    cpu = IntegerField()
+    status = CharField()
+
 class ChallengeSolve(BaseModel):
     team = ForeignKeyField(Team, related_name='solves')
     challenge = ForeignKeyField(Challenge, related_name='solves')

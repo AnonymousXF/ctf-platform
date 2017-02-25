@@ -125,11 +125,44 @@ python ctftool recache-solves
 
 
 
+
+##虚拟机管理
+管理员可以通过导航栏进入题目界面，对题目和虚拟机进行管理。
+对于题目的管理，可以通过命令行的方式添加题目，也可通过界面进行题目的添加，题目的删除只能通过ctftool进行。同时，在界面中，除了题目name以外的信息都可以修改，主要是可以控制题目的开启状态，当题目处于关闭状态，则参赛人员不可回答该题。
+对于虚拟机的管理，可以对虚拟机进行关闭，运行，挂起和恢复的操作，以及修改虚拟机的内存与处理器。若一道名为test的题目，需要运行虚拟机，则该题目对应的虚拟机也应起名为test。
+
+
+
 ## 单元测试的一些情况
 
 通过预先设计的测试用例，判断输出的结果是否与预期相符合。
 
 在测试的过程中，会有较长时间的等待，原因是后台程序在某几处对redis的键值对设置了有效期，在这个有效期内键值对的值不能被修改（例如在修改用户信息、提交flag等功能），如果提交会提示用户不要频繁提交，因此为了使测试用例能够通过，在其中添加了一些sleep语句进行延时，如果有必要，可以对redis键值对的有效时间进行缩短，提高单元测试的速度。
+
+由于有对虚拟机进行单元测试，所以进行测试前，需对本机进行相关虚拟机的安装，虚拟机的环境安装：
+
+```python
+sudo apt-get install qemu-kvm
+sudo apt-get install qemu
+sudo apt-get install virt-manager
+sudo apt-get install virt-viewer 
+sudo apt-get install libvirt-bin 
+sudo apt-get install bridge-utils
+```
+
+安装完成后重启系统，即可用virsh通过xml新建虚拟机，或通过virt-manager新建虚拟机均可。
+
+再在程序中修改虚拟机名称与路径即可。路径设置在admin.py中，如
+
+```python
+xml = "/etc/libvirt/qemu"
+```
+单元测试的虚拟机名，设置在admin_test.py中，如：
+```python
+Vname = '1-name'
+```
+
+
 
 ## 可能会遇到的问题
 

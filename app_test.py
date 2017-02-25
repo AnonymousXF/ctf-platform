@@ -13,7 +13,8 @@ import utils
 from datetime import datetime
 
 USER_NAME = 'user'
-USER_EMAIL = '464059291@qq.com'
+# USER_EMAIL = '464059291@qq.com'
+USER_EMAIL = '358693294@qq.com'
 USER_PASSWORD = '123456ASD'
 r = random.SystemRandom()
 secret = "".join([r.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for i in range(16)])
@@ -32,11 +33,11 @@ class BasicTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.create_table() for i in tables]
 		
 	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 	    #pass
 

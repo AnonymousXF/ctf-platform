@@ -8,6 +8,7 @@ ctf_home_url = "http://tjctf.org"
 eligibility = "In order to be eligible for prizes, all members of your team must be in high school, and you must not have more than four team members."
 tagline = "a cybersecurity competition created by TJHSST students"
 
+server_address = "qemu+tcp://nana@127.0.0.1/system"
 cdn = False
 apisubmit = True
 registration = True

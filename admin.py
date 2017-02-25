@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
 from flask_paginate import Pagination,get_page_args
-from database import AdminUser, User, TeamMember, TeamAccess, Team, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem
+from database import AdminUser, User, TeamMember, TeamAccess, Team, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem
 import utils
 import utils.admin
 import utils.scoreboard
+import utils.Vmanager
 from utils.decorators import admin_required, csrf_check
 from utils.notification import make_link
 from datetime import datetime
 from config import secret
+import config
 import redis
 
+url = ""
+xml = "/etc/libvirt/qemu"
 admin = Blueprint("admin", "admin", url_prefix="/admin")
 
 @admin.route("/")
@@ -100,6 +104,114 @@ def admin_notice():
                                 format_total=True, format_number=True)
         return render_template("admin/notice.html",notices=notices, pagination=pagination)
 
+@admin.route("/challenge/")
+@admin_required
+def admin_challenge():
+    challenges = Challenge.select()
+    conn = False
+    return render_template("admin/challenge.html",challenges=challenges,conn=conn)
+
+@admin.route("/geturl/", methods=["POST"])
+@admin_required
+def admin_get_url():
+    global url
+    url = request.form["url"]
+    return redirect(url_for(".admin_connect_server"))
+
+@admin.route("/connection/")
+@admin_required
+def admin_connect_server():
+    conn = utils.Vmanager.createConnection(url)
+    if not conn:
+        flash("连接失败")
+        return redirect(url_for(".admin_challenge"))
+    else: 
+        challenges = Challenge.select()
+        vmachines = Vmachine.select()
+        for vmachine in vmachines:
+            if not utils.Vmanager.isexist(conn,vmachine.name):
+                Vmachine.delete().where(Vmachine.name==vmachine.name).execute()
+                continue
+            memory,cpu,status = utils.Vmanager.getDomInfoByName(conn, vmachine.name)
+            if status == "5":
+                status = "shutdown"
+            elif status == "1":
+                status = "running"
+            else:
+                status = "suspend"
+            vmachine.memory = memory
+            vmachine.cpu = cpu
+            vmachine.status = status
+            vmachine.save()
+        vmachines = Vmachine.select()
+        utils.Vmanager.closeConnection(conn)
+        return render_template("admin/challenge.html",challenges=challenges,vmachines=vmachines,conn=conn)
+
+@admin.route("/vmachine/<int:tid>/", methods=["GET", "POST"])
+@admin_required
+def admin_edit_vmachine(tid):
+    if request.method == "GET":
+        vmachine = Vmachine.get(Vmachine.id == tid)
+        if vmachine.status == "shutdown":
+            run = False
+            sus = False
+            shut = True
+        elif vmachine.status == "running":
+            run = True
+            sus = False
+            shut = False
+        else:
+            run = False
+            sus = True
+            shut = False
+        return render_template("admin/vmachine.html", vmachine=vmachine,running=run,suspend=sus,shutdown=shut)
+    else:
+        conn = utils.Vmanager.createConnection(url)
+        vmachine = Vmachine.get(Vmachine.id == tid)
+        memory = request.form["vmachine_memory"].strip()
+        cpu = request.form["vmachine_cpu"].strip()
+        status = request.values.get("vmachine_status")
+        if not memory == str(vmachine.memory):
+            if not memory.isdigit():
+                flash("must be digital")
+                return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+            utils.Vmanager.modify_memory(conn,vmachine.name,int(memory)*1024)
+        if not cpu == str(vmachine.cpu):
+            if not cpu.isdigit():
+                flash("must be digital")
+                return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+            if cpu < '1' or cpu > '4':
+                flash("cpu should between 1 and 4") 
+                return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+            utils.Vmanager.modify_cpu(conn,vmachine.name,int(cpu))
+        if not status == vmachine.status:
+            if status == "running":
+                if vmachine.status == "shutdown":
+                    utils.Vmanager.startDom(conn,vmachine.name,xml)
+                else:
+                    flash("error")
+                    return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+            if status == "suspend":
+                if vmachine.status == "running":
+                    utils.Vmanager.suspendDom(conn,vmachine.name)
+                else:
+                    flash("error")
+                    return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+            if status == "resume":
+                if vmachine.status == "suspend":
+                    utils.Vmanager.resumeDom(conn,vmachine.name)
+                else:
+                    flash("error")
+                    return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+            if status == "shutdown":
+                if vmachine.status == "running":
+                    utils.Vmanager.destroyDom(conn,vmachine.name)
+                else:
+                    flash("error")
+                    return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
+        utils.Vmanager.closeConnection(conn)
+        return redirect(url_for('.admin_connect_server'))
+
 @admin.route("/tickets/")
 @admin_required
 def admin_tickets():
@@ -136,27 +248,37 @@ def admin_ticket_comment(ticket):
 
     return redirect(url_for(".admin_ticket_detail", ticket=ticket.id))
 
-@admin.route("/challenge/<int:tid>", methods=["GET", "POST"])
+@admin.route("/challenge/<int:tid>/", methods=["GET", "POST"])
 @admin_required
 def admin_edit_challenge(tid):
     if request.method == "GET":
         challenge = Challenge.get(Challenge.id == tid)
-        return render_template("admin/challenge.html", challenge=challenge)
+        return render_template("admin/challenge_edit.html", challenge=challenge)
     else:
         challenge = Challenge.get(Challenge.id == tid)
-        challenge.name = request.form["challenge_name"].strip()
-        challenge.category = request.form["challenge_category"].strip()
-        challenge.author = request.form["challenge_author"].strip()
-        challenge.description = request.form["challenge_des"].strip()
-        challenge.points = int(request.form["challenge_points"])
-        challenge.flag = request.form["challenge_flag"].strip()
-        challenge.enabled = "challenge_enabled" in request.form
+        category = request.form["challenge_category"].strip()
+        author = request.form["challenge_author"].strip()
+        description = request.form["challenge_des"].strip()
+        points = request.form["challenge_points"].strip()
+        flag = request.form["challenge_flag"].strip()
+        enabled = "challenge_enabled" in request.form
+        if not (category and author and description and points and flag):
+            flash("not null,create failed.")
+            return redirect(url_for('.admin_challenge'))
+        if not points.isdigit():
+            flash("points must be digital.")
+            return redirect(url_for('.admin_challenge'))
+        challenge.category = category
+        challenge.author = author
+        challenge.description = description
+        challenge.points = int(points)
+        challenge.flag = flag
         challenge.save()
         r = redis.StrictRedis()
         for chal in Challenge.select():
             r.hset("solves", chal.id, chal.solves.count())
         flash("change successfully.")
-        return redirect(url_for('.admin_dashboard'))
+        return redirect(url_for('.admin_challenge'))
 
 @admin.route("/challenge/add/", methods=["GET", "POST"])
 @admin_required
@@ -168,19 +290,27 @@ def admin_add_challenge():
         challenge_category = request.form["challenge_category"].strip()
         challenge_author = request.form["challenge_author"].strip()
         challenge_des = request.form["challenge_des"].strip()
-        challenge_points = int(request.form["challenge_points"])
+        challenge_points = request.form["challenge_points"].strip()
         challenge_flag = request.form["challenge_flag"].strip()
+        if not (challenge_name and challenge_category and challenge_author and challenge_des and challenge_points\
+             and challenge_flag):
+            flash("not null,create failed.")
+            return redirect(url_for('.admin_challenge'))
+        if not challenge_points.isdigit():
+            flash("points must be digital.")
+            return redirect(url_for('.admin_challenge'))
         if "challenge_enabled" in request.form:
             challenge_enabled = True
         else:
             challenge_enabled = False
         Challenge.create(name=challenge_name,category=challenge_category,author=challenge_author,description=challenge_des
-            ,points=challenge_points,flag=challenge_flag,enabled=challenge_enabled)
+            ,points=int(challenge_points),flag=challenge_flag,enabled=challenge_enabled)
+        Vmachine.create(name=challenge_name,memory=0,cpu=0,status="Not existing")
         r = redis.StrictRedis()
         for chal in Challenge.select():
             r.hset("solves", chal.id, chal.solves.count())
         flash("create successfully.")
-        return redirect(url_for('.admin_dashboard'))
+        return redirect(url_for('.admin_challenge'))
 
 @admin.route("/team/<int:tid>/")
 @admin_required

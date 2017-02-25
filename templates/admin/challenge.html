@@ -1,37 +1,68 @@
 {% extends "admin/base.html" %}
 {% block content %}
-<p4>编辑题目信息</p4>
+<h4>管理题目</h4>
+<div class="row">
+<div class="col s10 offset-s1">
+<table class="sortable">
+    <thead>
+        <tr><th>题目名</th><th>题目类型</th><th>状态</th><th>分值</th></th>
+    </thead>
+    <tbody>
+        {% for challenge in challenges %}
+        <tr>
+            <td>
+                <a href="{{ url_for('admin.admin_edit_challenge', tid=challenge.id) }}">{{ challenge.name }}</a>
+            </td>
+            <td>{{ challenge.category }}</td>
+            <td>{{ challenge.enabled }}</td>
+            <td>{{ challenge.points }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
 <br></br>
-<form action="{{ url_for('admin.admin_edit_challenge', tid=challenge.id) }}" method="POST">
-    <div class="row">
-        <div class="input-field">
-            <input required maxlength="100" style="text-valign:middle" id="challenge-name" name="challenge_name" type="text" value="{{ challenge.name }}"/>
-            <label for="challenge-name" style="text-valign:middle">题目名</label>
-        </div>
-        <div class="input-field">
-            <input required maxlength="100" style="text-valign:middle" id="challenge-category" name="challenge_category" type="text" value="{{ challenge.category }}"/>
-            <label for="challenge-category" style="text-valign:middle">类别</label>
-        </div>
-        <div class="input-field">
-            <input required maxlength="100" style="text-valign:middle" id="challenge-author" name="challenge_author" type="text" value="{{ challenge.author }}"/>
-            <label for="challenge-author" style="text-valign:middle">作者</label>
-        </div>
-        <div class="input-field">
-            <input required maxlength="100" style="text-valign:midle" id="challenge-des" name="challenge_des" type="text" value="{{ challenge.description }}"/>
-            <label for="challenge-des" style="text-valign:middle">描述</label>
-        </div>
-        <div class="input-field">
-            <input required maxlength="100" style="text-valign:midle" id="challenge-points" name="challenge_points" type="number" value="{{ challenge.points }}"/>
-            <label for="challenge-points" style="text-valign:middle">分值</label>
-        </div>
-        <div class="input-field">
-            <input required maxlength="100" style="text-valign:midle" id="challenge-flag" name="challenge_flag" type="number" value="{{ challenge.flag }}"/>
-            <label for="challenge-flag" style="text-valign:middle">flag</label>
-        </div>
-        <input style="text-valign:midle" id="challenge-enabled" name="challenge_enabled" type="checkbox" {% if challenge.enabled  %} checked="checked"{% endif %}/>
-        <label for="challenge-enabled" style="text-valign:middle">题目开启</label>
-        <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-        <div align="center"><button class="btn waves-effect waves-light" type="submit">修改题目</button></div>
+<a href="{{ url_for('admin.admin_add_challenge') }}"><div align="center"><button class="btn waves-effect waves-light" type="submit">新建题目</button></div></a>
+<br></br>
+<h4>管理虚拟机</h4>
+<p></p>
+{% if not conn %}
+<form action="{{ url_for('admin.admin_get_url') }}" method="POST">
+	<div class="row">
+	<div class="col s8 offset-s1">
+	<div class="input-field">
+        <input required maxlength="50" id="url" name="url" type="text" />
+        <label for="url">连接路径,如"qemu:///system"</label>
     </div>
+    </div>
+    </div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+  	<div align="center"><button class="btn waves-effect waves-light" type="submit" name="action">连接服务器<i class="material-icons right">send</i>
+  	</button></div>
 </form>
+{% else %}
+	<div class="row">
+	<div class="col s10 offset-s1">
+	<table class="sortable">
+	    <thead>
+	        <tr><th>虚拟机名</th><th>内存</th><th>cpu数</th><th>状态</th></th>
+	    </thead>
+	    <tbody>
+	        {% for vmachine in vmachines %}
+	        <tr>
+	            <td>
+	                <a href="{{ url_for('admin.admin_edit_vmachine', tid=vmachine.id) }}">{{ vmachine.name }}</a>
+	            </td>
+	            <td>{{ vmachine.memory }}</td>
+	            <td>{{ vmachine.cpu }}</td>
+	            <td>{{ vmachine.status }}</td>
+	        </tr>
+	        {% endfor %}
+	    </tbody>
+	</table>
+	</div>
+	</div>
+	<br></br>
+{% endif %}
 {% endblock %}

@@ -1,19 +1,24 @@
 import libvirt
 import sys
 from xml.dom import minidom
+from flask import current_app
 
 def createConnection(address):
 	try:
 		conn = libvirt.open(address)
+		current_app.logger.info("connect server success.")
 		return conn
-	except:
+	except Exception, e:
+		current_app.logger.error(e)
 		return False
 
 def closeConnection(conn):
 	try:
 		conn.close()
+		current_app.logger.info("close connection with server success.")
 		return True
-	except:
+	except Exception, e:
+		current_app.logger.error(e)
 		return False
 
 # def getConnInfo(conn):
@@ -36,42 +41,54 @@ def startDom(conn, name, xml):
 	myDom = conn.defineXML(newStrs)
 	try:
 		res = myDom.create()
-		return 1
-	except:
-		return 0
+		current_app.logger.info("create vmachine "+name+" success.")
+		return True
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 
 def suspendDom(conn, name):
 	myDom = conn.lookupByName(name)
 	try:
 		res = myDom.suspend()
-		return 1
-	except:
-		return 0
+		current_app.logger.info("suspend vmachine "+name+" success.")
+		return True
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 
 def resumeDom(conn, name):
 	myDom = conn.lookupByName(name)
 	try:
 		res = myDom.resume()
-		return 1
-	except:
-		return 0
+		current_app.logger.info("resume vmachine "+name+" success.")
+		return True
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 
 def destroyDom(conn, name):
 	myDom = conn.lookupByName(name)
 	try:
 		res = myDom.destroy()
-		return 1
-	except:
-		return 0
+		current_app.logger.info("destory vmachine "+name+" success.")
+		return True
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 
-def modify_cpu(conn, name, cpuNum):
+def modify_cpu(conn, name, cpuNum, xml):
 	myDom = conn.lookupByName(name)
 	state = myDom.isActive()
 	if state:
 		destroyDom(conn, name)
-	xml = "/etc/libvirt/qemu/"+name+".xml"
-	with open(xml) as f:
-		strs = f.read()
+	xml = xml+name+".xml"
+	try:
+		with open(xml) as f:
+			strs = f.read()
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 	xmlDom = minidom.parseString(strs)
 	domainNode = xmlDom.getElementsByTagName("domain")[0]
 	domainNode.getElementsByTagName("vcpu")[0].childNodes[0].nodeValue = cpuNum
@@ -81,15 +98,21 @@ def modify_cpu(conn, name, cpuNum):
 	myDom = conn.defineXML(newStrs)
 	if state:
 		myDom.create()
+	current_app.logger.info("modify vmachine cpu "+name+" success.")
+	return True
  
-def modify_memory(conn, name, memoryNum):
+def modify_memory(conn, name, memoryNum, xml):
 	myDom = conn.lookupByName(name)
 	state = myDom.isActive()
 	if state:
 		destroyDom(conn, name)
-	xml = "/etc/libvirt/qemu/"+name+".xml"
-	with open(xml) as f:
-		strs = f.read()
+	xml = xml+name+".xml"
+	try:
+		with open(xml) as f:
+			strs = f.read()
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 	xmlDom = minidom.parseString(strs)
 	domainNode = xmlDom.getElementsByTagName("domain")[0]
 	domainNode.getElementsByTagName("memory")[0].childNodes[0].nodeValue = memoryNum
@@ -100,6 +123,8 @@ def modify_memory(conn, name, memoryNum):
 	myDom = conn.defineXML(newStrs)
 	if state:
 		myDom.create()
+	current_app.logger.info("modify vmachine memory "+name+" success.")
+	return True
 
 def isexist(conn,name):
 	try:

@@ -70,7 +70,7 @@ Challenge added with id 1
 
 ```python
 if __name__ == '__main__':
-    app.run(debug=config.debug, port=8001)
+    app.run(host='0.0.0.0', debug=config.debug, port=8001)
 ```
 
 可以通过修改port参数来改变平台运行的端口，通过更改`config.py`文件中的debug值来开启/关闭DEBUG模式。
@@ -152,11 +152,6 @@ sudo apt-get install bridge-utils
 
 安装完成后重启系统，即可用virsh通过xml新建虚拟机，或通过virt-manager新建虚拟机均可。
 
-再在程序中修改虚拟机名称与路径即可。路径设置在admin.py中，如
-
-```python
-xml = "/etc/libvirt/qemu"
-```
 单元测试的虚拟机名，设置在admin_test.py中，如：
 ```python
 Vname = '1-name'

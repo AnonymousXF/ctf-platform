@@ -11,10 +11,10 @@
         {% for challenge in challenges %}
         <tr>
             <td>
-                <a href="{{ url_for('admin.admin_edit_challenge', tid=challenge.id) }}">{{ challenge.name }}</a>
+                {{ challenge.name }}
             </td>
             <td>{{ challenge.category }}</td>
-            <td>{{ challenge.enabled }}</td>
+            <td><a href="{{ url_for('admin.admin_enable_challenge', tid=challenge.id, csrf=csrf_token()) }}">{{ challenge.enabled }}</a></td>
             <td>{{ challenge.points }}</td>
         </tr>
         {% endfor %}
@@ -22,8 +22,6 @@
 </table>
 </div>
 </div>
-<br></br>
-<a href="{{ url_for('admin.admin_add_challenge') }}"><div align="center"><button class="btn waves-effect waves-light" type="submit">新建题目</button></div></a>
 <br></br>
 <h4>管理虚拟机</h4>
 <p></p>
@@ -34,6 +32,10 @@
 	<div class="input-field">
         <input required maxlength="50" id="url" name="url" type="text" />
         <label for="url">连接路径,如"qemu:///system"</label>
+    </div>
+    <div class="input-field">
+        <input required maxlength="50" id="xml" name="xml" type="text" />
+        <label for="xml">虚拟机安装路径,如"/etc/libvirt/qemu/"</label>
     </div>
     </div>
     </div>

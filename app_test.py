@@ -93,6 +93,8 @@ class FlaskrTestCase(unittest.TestCase):
 			time.sleep(10)
 			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email=USER_EMAIL, _csrf_token =csrf_token), follow_redirects=True)
 			self.assertIn(b'nothing changed!',rv.data)
+			rv = self.app.post('/user/',data=dict(user_name=USER_NAME+'1',user_email=USER_EMAIL, _csrf_token =csrf_token), follow_redirects=True)
+			self.assertIn(b'save change.',rv.data)
 			time.sleep(3)
 			long_name_data = dict(user_name = 'a'*100, user_email = USER_EMAIL, _csrf_token =csrf_token)
 			null_name_data = dict(user_name = '', user_email = USER_EMAIL, _csrf_token =csrf_token)
@@ -144,6 +146,7 @@ class FlaskrTestCase(unittest.TestCase):
 			wrongEmail2 = 'qweradsf.'
 			wrongEmail3 = 'qwerqwasdf@'
 			wrongEmail4 = 'qweradf@tjctf.org'
+			wrongEmail5 = '3333333@qq.com'
 			rv = self.register('2'+USER_NAME,'',USER_PASSWORD,USER_PASSWORD)
 			self.assertIn(b'wrong email format.',rv[0].data)
 			rv = self.register('2'+USER_NAME,wrongEmail1,USER_PASSWORD,USER_PASSWORD)
@@ -154,6 +157,8 @@ class FlaskrTestCase(unittest.TestCase):
 			self.assertIn(b'wrong email format.',rv[0].data)
 			rv = self.register('2'+USER_NAME,wrongEmail4,USER_PASSWORD,USER_PASSWORD)
 			self.assertIn(b'You are lying',rv[0].data)
+			rv = self.register('2'+USER_NAME,wrongEmail5,USER_PASSWORD,USER_PASSWORD)
+			self.assertIn(b'The email has been used!',rv[0].data)
 			# wrong pwd
 			rv = self.register('2'+USER_NAME,'358693294@qq.com','123456ASD','123456')
 			self.assertIn(b'Entered passwords differs',rv[0].data)

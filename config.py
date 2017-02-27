@@ -1,14 +1,14 @@
+# -*- coding: utf-8 -*-
 import os
 from datetime import datetime
 
 ctf_name = "HUSTCTF"
 #IRC Channel
-ctf_chat_channel = "#tjctf"
-ctf_home_url = "http://tjctf.org"
-eligibility = "In order to be eligible for prizes, all members of your team must be in high school, and you must not have more than four team members."
+ctf_chat_channel = "#hustctf"
+#ctf_home_url = "http://tjctf.org"
+eligibility = "为了有资格获奖, 队伍的所有成员都必须来自于学校, 每队最多4个成员。"
 tagline = "a cybersecurity competition created by TJHSST students"
 
-server_address = "qemu+tcp://nana@127.0.0.1/system"
 cdn = False
 apisubmit = True
 registration = True

@@ -9,7 +9,7 @@ def install_env():
 		virt-viewer libvirt-bin bridge-utils")
 
 def set_bridge():
-	file = '/etc/network/interfaces'   //网络配置文件
+	file = '/etc/network/interfaces'   #网络配置文件
 	try:
 		with open(file) as f:
 			strs = f.read()
@@ -54,12 +54,9 @@ def define_xml():
 				f.close()
 				myDom = conn.defineXML(newStrs)
 				myDom.create()
-				# print domains = conn.listAllDomains()
+	return True
 
 if __name__=='__main__':
-	if not install_env():
-		print "环境安装失败"
-		exit()
 	if not set_bridge():
 		print "网络配置文件路径有误，请修改路径"
 		exit()

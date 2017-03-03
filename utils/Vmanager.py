@@ -1,3 +1,5 @@
+import os
+import sys
 import libvirt
 import sys
 from xml.dom import minidom
@@ -21,6 +23,10 @@ def closeConnection(conn):
 		current_app.logger.error(e)
 		return False
 
+def getalldomains(conn):
+	domains = conn.listAllDomains()
+	return domains
+
 # def getConnInfo(conn):
 # 	print "***********Host info ************"
 # 	print "Hostname: "+conn.getHostname()
@@ -32,16 +38,12 @@ def getDomInfoByName(conn, name):
 	myDom = conn.lookupByName(name)
 	return str(myDom.maxMemory()/1024),str(myDom.info()[3]),str(myDom.state(0)[0])
 
-def startDom(conn, name, xml):
-	xml = xml+"/"+name+".xml"
-	with open(xml) as f:
-		strs = f.read()
-	xmlDom = minidom.parseString(strs)
-	newStrs = xmlDom.toxml()
-	myDom = conn.defineXML(newStrs)
+def startDom(conn, name):
+	myDom = conn.lookupByName(name)
 	try:
-		res = myDom.create()
-		current_app.logger.info("create vmachine "+name+" success.")
+		if myDom.state(0)[0]==5:
+			myDom.create()
+			current_app.logger.info("start vmachine "+name+" success.")
 		return True
 	except Exception, e:
 		current_app.logger.error(e)
@@ -82,6 +84,7 @@ def modify_cpu(conn, name, cpuNum, xml):
 	state = myDom.isActive()
 	if state:
 		destroyDom(conn, name)
+	myDom.undefine()
 	xml = xml+name+".xml"
 	try:
 		with open(xml) as f:
@@ -106,6 +109,7 @@ def modify_memory(conn, name, memoryNum, xml):
 	state = myDom.isActive()
 	if state:
 		destroyDom(conn, name)
+	myDom.undefine()
 	xml = xml+name+".xml"
 	try:
 		with open(xml) as f:

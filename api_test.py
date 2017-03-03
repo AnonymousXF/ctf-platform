@@ -23,11 +23,11 @@ class FlaskrTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.create_table() for i in tables]
 		
 	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 
 	def login(self, user_name, user_pwd):

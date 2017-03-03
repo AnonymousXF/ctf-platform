@@ -3,6 +3,7 @@
 
 ```
 #linux system
+~/flagbase $ sudo apt-get install libvirt-bin
 ~/flagbase $ sudo pip install -r requirements.txt
 
 #windows system
@@ -75,7 +76,7 @@ if __name__ == '__main__':
 
 可以通过修改port参数来改变平台运行的端口，通过更改`config.py`文件中的debug值来开启/关闭DEBUG模式。
 
-运行 `python app.py` ，CTF平台即可运行。 
+运行 `python app.py` ，CTF平台即可运行，注意程序运行是不需要root权限，若用sudo运行，则无法不输入与运行虚拟机的服务器建立ssh连接。 
 
 ```
 ~/flagbase $ python app.py
@@ -128,10 +129,8 @@ python ctftool recache-solves
 
 ##虚拟机管理
 管理员可以通过导航栏进入题目界面，对题目和虚拟机进行管理。
-对于题目的管理，可以通过命令行的方式添加题目，也可通过界面进行题目的添加，题目的删除只能通过ctftool进行。同时，在界面中，除了题目name以外的信息都可以修改，主要是可以控制题目的开启状态，当题目处于关闭状态，则参赛人员不可回答该题。
-对于虚拟机的管理，可以对虚拟机进行关闭，运行，挂起和恢复的操作，以及修改虚拟机的内存与处理器。若一道名为test的题目，需要运行虚拟机，则该题目对应的虚拟机也应起名为test。
-
-
+对于题目的管理，在界面中，除了题目name以外的信息都可以修改，主要是可以控制题目的开启状态，当题目处于关闭状态，则参赛人员不可回答该题。
+对于虚拟机的管理，可以对虚拟机进行关闭，运行，挂起和恢复的操作，以及修改虚拟机的内存与处理器。在管理虚拟机之前，需在界面输入url，若虚拟机与平台运行在同一台服务器上，则输入qemu:///system即可，若运行在不同的服务器上，则需要在两台服务器之间配置ssh连接，并配置公钥与私钥，能够不输入密码即可远程登录进去，远程url为qemu+ssh://user@ip/system。同时还应输入虚拟机配置文件xml的路径，如FreeDOS.xml的路径为/etc/libvirt/qemu/FreeDOS.xml，则需输入/etc/libvirt/qemu/。注意所有虚拟机的xml配置文件应放在同一目录下。
 
 ## 单元测试的一些情况
 
@@ -154,7 +153,7 @@ sudo apt-get install bridge-utils
 
 单元测试的虚拟机名，设置在admin_test.py中，如：
 ```python
-Vname = '1-name'
+Vname = 'FreeDOS'
 ```
 
 

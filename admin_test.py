@@ -11,7 +11,7 @@ from datetime import datetime
 import random
 import utils.admin
 
-Vname = '1-name'
+Vname = 'FreeDOS'
 config.debug=True
 TEST_ADMIN_NAME = 'nana'
 TEST_ADMIN_PASSWORD = 'nana'
@@ -23,11 +23,11 @@ class FlaskrTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.create_table() for i in tables]
 
 	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 
 	def login(self, username, password):
@@ -295,7 +295,6 @@ class FlaskrTestCase(unittest.TestCase):
 		self.assertIn('You must be an admin to access that page.', rv.data)
 		challenge = Challenge.create(name=Vname,category='Web',author='nana',description='test,test,test',points='120',flag='flag{whatever}')
 		rv = self.app.get('/admin/challenge/', follow_redirects=True)
-		Vmachine.create(name=Vname,memory=0,cpu=0,status="Not existing")
 		#login test challenge.html
 		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
 		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
@@ -306,7 +305,7 @@ class FlaskrTestCase(unittest.TestCase):
 		# rv = self.app.post('/admin/geturl/', data=dict(url="qemu://222.0.0.1/system",xml="/etc/libvirt/qemu/", _csrf_token = csrf), follow_redirects=True)
 		# self.assertIn("连接服务器", rv.data)
 		# correct url
-		rv = self.app.post('/admin/geturl/', data=dict(url="qemu:///system",xml="/etc/libvirt/qemu/",_csrf_token = csrf), follow_redirects=True)
+		rv = self.app.post('/admin/geturl/', data=dict(url="qemu:///system",xml="/home/nana/Vmachine/FreeDOS/",_csrf_token = csrf), follow_redirects=True)
 		self.assertIn("虚拟机名", rv.data)
 		# edit vmachine
 		vmachine = Vmachine.get(Vmachine.name==Vname)

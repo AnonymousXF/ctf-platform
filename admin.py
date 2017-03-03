@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
 from flask_paginate import Pagination,get_page_args
-from database import AdminUser, User, TeamMember, TeamAccess, Team, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem
+from database import AdminUser, User, TeamMember, UserAccess, Team, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem
 import utils
 import utils.admin
 import utils.scoreboard
@@ -15,7 +15,7 @@ import redis
 from flask import current_app
 
 url = ""
-xml = ""#"/etc/libvirt/qemu"
+xml = ""
 #xml=''
 admin = Blueprint("admin", "admin", url_prefix="/admin")
 
@@ -73,7 +73,6 @@ def admin_team_add():
             current_app.logger.info(session["admin"]+"reject team ,team_name is "+i.name)  
             TeamMember.delete().where(TeamMember.member==i.team_leader).execute()
             Team.delete().where(Team.id==i.id).execute()
-            TeamAccess.delete().where(TeamAccess.team==i).execute()
             flash("reject")
     return redirect(url_for('.admin_dashboard'))
 
@@ -114,40 +113,14 @@ def admin_notice():
 @admin.route("/challenge/")
 @admin_required
 def admin_challenge():
-    global url
+    vmachines = Vmachine.select()
     challenges = Challenge.select()
-    if not url:
+    if not vmachines:
         conn = False
         return render_template("admin/challenge.html",challenges=challenges,conn=conn)
     else:
         conn = utils.Vmanager.createConnection(url)
-        if not conn:
-            url = ''
-            current_app.logger.info(session["admin"]+" connect server failed.")
-            flash("连接失败")
-            return redirect(url_for(".admin_challenge"))
-        else: 
-            current_app.logger.info(session["admin"]+" connect server successful.")
-            challenges = Challenge.select()
-            vmachines = Vmachine.select()
-            for vmachine in vmachines:
-                if not utils.Vmanager.isexist(conn,vmachine.name):
-                    Vmachine.delete().where(Vmachine.name==vmachine.name).execute()
-                    continue
-                memory,cpu,status = utils.Vmanager.getDomInfoByName(conn, vmachine.name)
-                if status == "5":
-                    status = "shutdown"
-                elif status == "1":
-                    status = "running"
-                else:
-                    status = "suspend"
-                vmachine.memory = memory
-                vmachine.cpu = cpu
-                vmachine.status = status
-                vmachine.save()
-            vmachines = Vmachine.select()
-            utils.Vmanager.closeConnection(conn)
-            return render_template("admin/challenge.html",challenges=challenges,vmachines=vmachines,conn=conn)
+        return render_template("admin/challenge.html",challenges=challenges,vmachines=vmachines,conn=conn)
 
 @admin.route("/challenge/<int:tid>/<csrf>/enable_challenge/")
 @csrf_check
@@ -167,7 +140,31 @@ def admin_get_url():
     global xml
     url = request.form["url"]
     xml = request.form["xml"]
-    return redirect(url_for(".admin_challenge"))
+    if not url:
+        conn = False
+        return redirect(url_for(".admin_challenge"))
+    else:
+        conn = utils.Vmanager.createConnection(url)
+        if not conn:
+            url = ''
+            current_app.logger.info(session["admin"]+" connect server failed.")
+            flash("连接失败")
+            return redirect(url_for(".admin_challenge"))
+        else: 
+            current_app.logger.info(session["admin"]+" connect server successful.")
+            domains = utils.Vmanager.getalldomains(conn)
+            challenges = Challenge.select()
+            for domain in domains:
+                memory,cpu,status = utils.Vmanager.getDomInfoByName(conn, domain.name())
+                if status == "5":
+                    status = "shutdown"
+                elif status == "1":
+                    status = "running"
+                else:
+                    status = "suspend"
+                Vmachine.create(name=domain.name(),memory=int(memory),cpu=int(cpu),status=status)
+            return redirect(url_for(".admin_challenge"))
+
 
 @admin.route("/vmachine/<int:tid>/", methods=["GET", "POST"])
 @admin_required
@@ -199,6 +196,8 @@ def admin_edit_vmachine(tid):
                 return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
             if not utils.Vmanager.modify_memory(conn,vmachine.name,int(memory)*1024,xml):
                 flash("modify memory failed.")
+            else:
+                vmachine.memory = int(memory)
         if not cpu == str(vmachine.cpu):
             if not cpu.isdigit():
                 flash("must be digital")
@@ -208,32 +207,39 @@ def admin_edit_vmachine(tid):
                 return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
             if not utils.Vmanager.modify_cpu(conn,vmachine.name,int(cpu),xml):
                 flash("modify cpu failed.")
+            else:
+                vmachine.cpu = int(cpu)
         if not status == vmachine.status:
             if status == "running":
                 if vmachine.status == "shutdown":
-                    utils.Vmanager.startDom(conn,vmachine.name,xml)
+                    utils.Vmanager.startDom(conn,vmachine.name)
+                    vmachine.status = status
                 else:
                     flash("error")
                     return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
             if status == "suspend":
                 if vmachine.status == "running":
                     utils.Vmanager.suspendDom(conn,vmachine.name)
+                    vmachine.status = status
                 else:
                     flash("error")
                     return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
             if status == "resume":
                 if vmachine.status == "suspend":
                     utils.Vmanager.resumeDom(conn,vmachine.name)
+                    vmachine.status = "running"
                 else:
                     flash("error")
                     return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
             if status == "shutdown":
                 if vmachine.status == "running":
                     utils.Vmanager.destroyDom(conn,vmachine.name)
+                    vmachine.status = status
                 else:
                     flash("error")
                     return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
         utils.Vmanager.closeConnection(conn)
+        vmachine.save()
         return redirect(url_for('.admin_challenge'))
 
 @admin.route("/tickets/")
@@ -316,5 +322,8 @@ def admin_score_adjust(tid):
 
 @admin.route("/logout/")
 def admin_logout():
+    vmachines = Vmachine.select()
+    for vmachine in vmachines:
+        Vmachine.delete().where(Vmachine.id==vmachine.id).execute()
     del session["admin"]
     return redirect(url_for('.admin_login'))

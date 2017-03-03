@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>{{ config.ctf_name }} 管理员 &ndash; {% block title %}Home{% endblock %}</title>
+        <title>{{ config.ctf_name }} &ndash; {% block title %}Home{% endblock %}</title>
         {% if config.cdn %}
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.1/css/materialize.min.css" />
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.9.0/vis.min.css" />
@@ -26,7 +26,7 @@
                             <li><a href="{{ url_for('admin.admin_notice') }}"><font size="5px">通知</a></li>
                             <li><a href="{{ url_for('admin.admin_challenge') }}"><font size="5px">题目</a></li>
                         </ul>
-                        <a href="#" class="center brand-logo">{{ config.ctf_name }} 管理员</a>
+                        <a href="#" class="center brand-logo">{{ config.ctf_name }}</a>
                         <ul class="right hide-on-med-and-down">
                             <li><a href="{{ url_for('admin.admin_logout') }}"><font size="5px">注销 ({{ session.admin }})</a></li>
                         </ul>

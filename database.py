@@ -39,8 +39,8 @@ class TeamMember(BaseModel):
 		primary_key=CompositeKey('team', 'member')
 
 	
-class TeamAccess(BaseModel):
-    team = ForeignKeyField(Team, related_name='accesses')
+class UserAccess(BaseModel):
+    user = ForeignKeyField(User, related_name='accesses')
     ip = CharField()
     time = DateTimeField()
 

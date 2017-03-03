@@ -7,7 +7,7 @@ ctf_name = "HUSTCTF"
 ctf_chat_channel = "#hustctf"
 #ctf_home_url = "http://tjctf.org"
 eligibility = "为了有资格获奖, 队伍的所有成员都必须来自于学校, 每队最多4个成员。"
-tagline = "a cybersecurity competition created by TJHSST students"
+tagline = "a cybersecurity competition created by HUSTCTF students"
 
 cdn = False
 apisubmit = True
@@ -25,9 +25,9 @@ immediate_scoreboard = True
 # Useful for verifying resumes and use with resume server.
 confirm_ip = []
 
-static_prefix = "http://127.0.0.1/tjctf-static/"
+static_prefix = "http://127.0.0.1/hustctf-static/"
 static_dir = "{}/static/".format(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-custom_stylesheet = "tjctf.css"
+custom_stylesheet = "hustctf.css"
 
 interval = 1
 competition_begin = datetime(1970, 1, 1, 0, 0)
@@ -38,7 +38,7 @@ resumes = True
 # If yes, where's it hosted? Otherwise, just put None.
 resume_server = "https://resumes.tjctf.org"
 
-disallowed_domain = "tjctf.org"
+disallowed_domain = "hustctf.org"
 
 email_sender = os.environ.get('MAIL_USERNAME')
 email_pass = os.environ.get('MAIL_PASSWORD')

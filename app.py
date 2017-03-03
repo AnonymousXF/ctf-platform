@@ -3,7 +3,7 @@ from flask import Flask, render_template, session, redirect, url_for, request, g
 from flask_paginate import Pagination,get_page_args
 app = Flask(__name__)
 
-from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem, db
+from database import User, Team, TeamMember, UserAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem, db
 from datetime import datetime
 from peewee import fn
 
@@ -319,7 +319,7 @@ def team_register():
         team = Team.create(name=team_name, eligible=team_elig, affiliation=affiliation, team_leader=team_leader)
         TeamMember.create(team=team,member=team_leader,member_confirmed=False)
         if not config.debug:
-            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+            UserAccess.create(user=g.user, ip=misc.get_ip(), time=datetime.now())
         session["team_id"] = team.id
         app.logger.info(g.user.username+" register a team.")
         flash("The request has send to admin.")

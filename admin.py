@@ -242,6 +242,25 @@ def admin_edit_vmachine(tid):
         vmachine.save()
         return redirect(url_for('.admin_challenge'))
 
+@admin.route("/notice/", methods=["GET", "POST"])
+@admin_required
+def admin_notice():
+    if request.method == "POST":
+        title = request.form["title"]
+        content = request.form["content"]
+        publish_time = datetime.now()
+        notice = NewsItem.create(title=title, content=content, time=publish_time)
+        flash("Publish Success!")
+        return redirect(url_for("admin.admin_notice"))
+    else:
+        all_record_num = NewsItem.select().count()
+        page, per_page, offset = get_page_args()
+        per_page = 8
+        notices = NewsItem.select().order_by(-NewsItem.time).paginate(page, per_page)
+        pagination = Pagination(page=page, total=all_record_num, per_page=per_page, record_name='notices',
+                                format_total=True, format_number=True)
+        return render_template("admin/notice.html",notices=notices, pagination=pagination)
+
 @admin.route("/tickets/")
 @admin_required
 def admin_tickets():

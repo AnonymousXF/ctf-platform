@@ -35,9 +35,6 @@ MAIL_USERNAME=xxxx@xxx.com  #邮箱的名字
 MAIL_PASSWORD=xxxxx     #邮箱SMTP服务的密码
 MAIL_HOST=xxxxx     #SMTP服务器
 ```
-
-
-
 基本配置设置好之后，创建数据库：
 
 ```
@@ -155,8 +152,6 @@ sudo apt-get install bridge-utils
 ```python
 Vname = 'FreeDOS'
 ```
-
-
 
 ## 可能会遇到的问题
 

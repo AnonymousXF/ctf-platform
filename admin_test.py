@@ -366,5 +366,8 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
 		self.assertIn('shutdown', rv.data)
 
+
+
+
 if __name__ == '__main__':
 	unittest.main()

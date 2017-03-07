@@ -1,0 +1,33 @@
+<?xml version="1.0" ?><domain type="kvm">
+    <name>FreeDOS</name>                     
+    <memory>1048576</memory>                 
+    <currentMemory>1048576</currentMemory>    
+    <vcpu>1</vcpu>                                                   
+    <os>
+      <type arch="x86_64" machine="pc">hvm</type>
+      <boot dev="hd"/>                                         
+   </os>
+   <features>
+     <acpi/>
+     <apic/>
+     <pae/>
+   </features>
+   <clock offset="localtime"/>
+   <on_poweroff>destroy</on_poweroff>
+   <on_reboot>restart</on_reboot>   
+   <on_crash>destroy</on_crash>
+   <devices>
+     <emulator>/usr/bin/kvm-spice</emulator>
+     <disk device="disk" type="file">
+      <driver name="qemu" type="qcow2"/>           
+       <source file="/home/nana/Vmachine/FreeDOS/FreeDOS.qcow2"/>        
+       <target bus="ide" dev="hda"/>
+     </disk>
+    <interface type="bridge">                                               
+      <source bridge="br0"/>
+      <mac address="00:00:00:00:00:01"/>    
+    </interface>
+    <input bus="ps2" type="mouse"/>
+     <graphics autoport="yes" keymap="en-us" listen="0.0.0.0" port="-1" type="vnc"/>
+   </devices>
+ </domain>

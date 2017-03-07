@@ -39,8 +39,8 @@ class TeamMember(BaseModel):
 		primary_key=CompositeKey('team', 'member')
 
 	
-class TeamAccess(BaseModel):
-    team = ForeignKeyField(Team, related_name='accesses')
+class UserAccess(BaseModel):
+    user = ForeignKeyField(User, related_name='accesses')
     ip = CharField()
     time = DateTimeField()
 
@@ -53,6 +53,12 @@ class Challenge(BaseModel):
     breakthrough_bonus = IntegerField(default=0)
     enabled = BooleanField(default=True)
     flag = TextField()
+
+class Vmachine(BaseModel):
+    name = CharField()
+    memory = IntegerField()
+    cpu = IntegerField()
+    status = CharField()
 
 class ChallengeSolve(BaseModel):
     team = ForeignKeyField(Team, related_name='solves')

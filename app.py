@@ -3,7 +3,7 @@ from flask import Flask, render_template, session, redirect, url_for, request, g
 from flask_paginate import Pagination,get_page_args
 app = Flask(__name__)
 
-from database import User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem, db
+from database import User, Team, TeamMember, UserAccess, Challenge, ChallengeSolve, ChallengeFailure, ScoreAdjustment, TroubleTicket, TicketComment, Notification, NewsItem, db
 from datetime import datetime
 from peewee import fn
 
@@ -19,7 +19,15 @@ import socket
 app.secret_key = config.secret.key
 
 import logging
-logging.basicConfig(level=logging.WARNING)
+from logging.handlers import RotatingFileHandler
+from logging import FileHandler
+# logging.basicConfig(level=logging.WARNING)
+formatter = logging.Formatter("[%(asctime)s]{%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
+#logHandler = RotatingFileHandler('VMcloud.log', maxBytes = 5*1024*1024, backupCount = 2)
+logHandler = FileHandler('ctf-platform.log')
+#logHandler.setLevel(logging.NOTSET)
+logHandler.setFormatter(formatter)
+app.logger.addHandler(logHandler)
 
 @app.before_request
 def make_info_available():
@@ -92,9 +100,11 @@ def scoreboard():
         if config.immediate_scoreboard:
             data = utils.scoreboard.calculate_scores()
             graphdata = utils.scoreboard.calculate_graph(data)
-            utils.cache.set_complex("scoreboard", data, 120)
-            utils.cache.set_complex("graph", graphdata, 120)
+            utils.cache.set_complex("scoreboard", data, config.interval)
+            utils.cache.set_complex("graph", graphdata, config.interval)
+            app.logger.info("visit scoreboard.")
         else:
+            app.logger.info("visit scoreboard failed.")
             return "No scoreboard data available. Please contact an organizer."
 
     return render_template("scoreboard.html", data=data, graphdata=graphdata)
@@ -116,9 +126,11 @@ def login():
                     session["team_id"] = teammember.team.id
                 except TeamMember.DoesNotExist:
                     pass
+                app.logger.info(username+" login successful")
                 flash("Login successful.")
                 return redirect(url_for('team_dashboard'))
             else:
+                app.logger.info(username+" login failed,Wrong pwd!")
                 flash("Wrong pwd!")
                 return render_template("login.html")
         except User.DoesNotExist:
@@ -138,6 +150,7 @@ def forget_pwd():
                 #sendemail.send_confirmation_email(user.email, confirmation_key)
                 user.email_confirmation_key = confirmation_key
                 user.save()
+                app.logger.info(user_name+" forgot pwd!")
                 flash("The confirmed code has been send to your email")
                 return render_template("forget_pwd.html")
             else:
@@ -182,6 +195,7 @@ def reset_pwd():
         pwhash = utils.user.create_password(user_pwd.encode())
         g.user.password = pwhash
         g.user.save()
+        app.logger.info(g.user.username+" reset pwd.")
         flash("Success")
         session.pop("user_id")
         return redirect(url_for('login'))
@@ -251,11 +265,13 @@ def register():
         sendemail.send_confirmation_email(user_email, confirmation_key)
 
         session["user_id"] = user.id
+        app.logger.info(user_name+" register successfully.")
         flash("register successfully.")
-        return redirect(url_for('team_dashboard'))
+        return redirect(url_for('dashboard'))
 
 @app.route('/logout/')
 def logout():
+    app.logger.info(g.user.username+" logout.")
     session.pop("user_id")
     if "team_id" in session:
         session.pop("team_id")
@@ -268,6 +284,7 @@ def logout():
 @decorators.login_required
 def confirm_email():
     if request.form["confirmation_key"] == g.user.email_confirmation_key:
+        app.logger.info(g.user.username+" confirmed email.")
         flash("confirmed!")
         g.user.email_confirmed = True
         g.user.save()
@@ -302,8 +319,9 @@ def team_register():
         team = Team.create(name=team_name, eligible=team_elig, affiliation=affiliation, team_leader=team_leader)
         TeamMember.create(team=team,member=team_leader,member_confirmed=False)
         if not config.debug:
-            TeamAccess.create(team=team, ip=misc.get_ip(), time=datetime.now())
+            UserAccess.create(user=g.user, ip=misc.get_ip(), time=datetime.now())
         session["team_id"] = team.id
+        app.logger.info(g.user.username+" register a team.")
         flash("The request has send to admin.")
         return redirect(url_for('team_dashboard'))
 
@@ -341,6 +359,7 @@ def team_modify():
         g.team.affiliation = affiliation
         g.team.eligible = team_elig
         g.team.save()
+        app.logger.info(g.user.username+" modify team.")
         flash("change successfully.")
         return redirect(url_for('team_dashboard'))
 
@@ -357,6 +376,7 @@ def team_join():
                 return redirect(url_for('team_dashboard'))
             else:
                 TeamMember.create(team=team.id, member=g.user.id)
+                app.logger.info(g.user.username+" want to join "+team_name)
                 flash("The request has sent to leader!")
                 return redirect(url_for('team_dashboard'))
         except Team.DoesNotExist:
@@ -385,11 +405,13 @@ def user_add():
                     number = number+1
                     i.member_confirmed = True
                     i.save()
+                    app.logger.info(g.user.username+" agree "+i.member.username+" join "+g.team.name)
                     flash("agree")
                 else:
                     flash("The count of member must be less of 5")
             if reject in request.form:
                 TeamMember.delete().where(TeamMember.member==i.member).execute()
+                app.logger.info(g.user.username+" reject "+i.member.username+" join "+g.team.name)
                 flash("reject")
         return redirect(url_for('team_dashboard'))
 
@@ -425,7 +447,7 @@ def dashboard():
         g.user.username = user_name
         g.user.email = user_email
 
-        g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), 120)
+        g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), config.interval)
 
         if email_changed:
             if not sendemail.is_valid_email(user_email):
@@ -447,6 +469,7 @@ def dashboard():
             sendemail.send_confirmation_email(user_email, g.user.email_confirmation_key)
             flash("please confirme email")
         else:
+            app.logger.info(g.user.username+" changed its infomation.")
             flash("save change.")
         g.user.save()
         return redirect(url_for('dashboard'))
@@ -512,7 +535,6 @@ def dynamic_display():
             if results[i] is not None:
                 result.append(results[i])
     pagination = Pagination(page=page,total=len(results),per_page=per_page,record_name='result')
-
     notices = NewsItem.select().order_by(-NewsItem.time)
     return render_template("dynamics.html", notices=notices, result=result, pagination=pagination)
 
@@ -547,6 +569,7 @@ def submit(challenge):
     flagval = request.form["flag"]
 
     code, message = flag.submit_flag(g.team, chal, flagval)
+    app.logger.info(g.user.username+" submit a flag ,challenge's name is "+chal.name)
     flash(message)
     return redirect(url_for('challenges'))
 
@@ -573,6 +596,7 @@ def open_ticket():
         description = request.form["description"]
         opened_at = datetime.now()
         ticket = TroubleTicket.create(team=g.team, summary=summary, description=description, opened_at=opened_at)
+        app.logger.info(g.user.username+" opened a ticket,ticket's id is "+str(ticket.id))
         flash("Ticket #{} opened.".format(ticket.id))
         return redirect(url_for("team_ticket_detail", ticket=ticket.id))
 
@@ -612,16 +636,19 @@ def team_ticket_comment(ticket):
 
     if request.form["comment"]:
         TicketComment.create(ticket=ticket, comment_by=g.team.name, comment=request.form["comment"], time=datetime.now())
+        app.logger.info(g.user.username+" comment a ticket,ticket's id is "+str(ticket.id))
         flash("Comment added.")
 
     if ticket.active and "resolved" in request.form:
         ticket.active = False
         ticket.save()
+        app.logger.info(g.user.username+" closed a ticket,ticket's id is "+str(ticket.id))
         flash("Ticket closed.")
 
     elif not ticket.active and "resolved" not in request.form:
         ticket.active = True
         ticket.save()
+        app.logger.info(g.user.username+" re-opened a ticket,ticket's id is "+str(ticket.id))
         flash("Ticket re-opened.")
 
     return redirect(url_for("team_ticket_detail", ticket=ticket.id))
@@ -662,4 +689,5 @@ def generate_csrf_token():
 app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8001)
+    app.logger.info("begin run")
+    app.run(host='0.0.0.0', debug=config.debug, port=8001)

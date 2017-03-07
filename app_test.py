@@ -13,7 +13,8 @@ import utils
 from datetime import datetime
 
 USER_NAME = 'user'
-USER_EMAIL = '464059291@qq.com'
+# USER_EMAIL = '464059291@qq.com'
+USER_EMAIL = '358693294@qq.com'
 USER_PASSWORD = '123456ASD'
 r = random.SystemRandom()
 secret = "".join([r.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for i in range(16)])
@@ -32,11 +33,11 @@ class BasicTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.create_table() for i in tables]
 		
 	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, Vmachine, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 	    #pass
 
@@ -53,11 +54,11 @@ class FlaskrTestCase(unittest.TestCase):
 	def setUp(self):
 		app.config['TESTING'] = True
 		self.app = app.test_client()
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.create_table() for i in tables]
 		
 	def tearDown(self):
-		tables = [User, Team, TeamMember, TeamAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
+		tables = [User, Team, TeamMember, UserAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 	    #pass
 	
@@ -89,9 +90,11 @@ class FlaskrTestCase(unittest.TestCase):
 			rv = self.app.post('/confirm_email/',data = correct_data, follow_redirects=True)
 			self.assertIn(b'confirmed!',rv.data)
 			# update user_information 
-			time.sleep(60)
+			time.sleep(10)
 			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email=USER_EMAIL, _csrf_token =csrf_token), follow_redirects=True)
 			self.assertIn(b'nothing changed!',rv.data)
+			rv = self.app.post('/user/',data=dict(user_name=USER_NAME+'1',user_email=USER_EMAIL, _csrf_token =csrf_token), follow_redirects=True)
+			self.assertIn(b'save change.',rv.data)
 			time.sleep(3)
 			long_name_data = dict(user_name = 'a'*100, user_email = USER_EMAIL, _csrf_token =csrf_token)
 			null_name_data = dict(user_name = '', user_email = USER_EMAIL, _csrf_token =csrf_token)
@@ -108,23 +111,23 @@ class FlaskrTestCase(unittest.TestCase):
 			wrong_email_data1 = dict(user_name = USER_NAME, user_email = 'qwerasdf', _csrf_token =csrf_token)
 			wrong_email_data2 = dict(user_name = USER_NAME, user_email = 'qwerasdf.', _csrf_token =csrf_token)
 			wrong_email_data3 = dict(user_name = USER_NAME, user_email = 'qwerasdf@', _csrf_token =csrf_token)
-			wrong_email_data4 = dict(user_name = USER_NAME, user_email = 'qwerasdf@tjctf.org', _csrf_token =csrf_token)
+			wrong_email_data4 = dict(user_name = USER_NAME, user_email = 'qwerasdf@hustctf.org', _csrf_token =csrf_token)
 			time.sleep(3)
 			rv = self.app.post('/user/',data = wrong_email_data1, follow_redirects=True)
 			self.assertIn(b'wrong email format.',rv.data)
-			time.sleep(120)
+			time.sleep(config.interval)
 			rv = self.app.post('/user/',data = wrong_email_data2, follow_redirects=True)
 			self.assertIn(b'wrong email format.',rv.data)
-			time.sleep(120)
+			time.sleep(config.interval)
 			rv = self.app.post('/user/',data = wrong_email_data3, follow_redirects=True)
 			self.assertIn(b'wrong email format.',rv.data)
-			time.sleep(120)
+			time.sleep(config.interval)
 			rv = self.app.post('/user/',data = wrong_email_data4, follow_redirects=True)
 			self.assertIn(b'You are lying',rv.data)
-			time.sleep(120)
+			time.sleep(config.interval)
 			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email='3333333@qq.com', _csrf_token =csrf_token), follow_redirects=True)
 			self.assertIn(b'The email has been used!',rv.data)
-			time.sleep(120)
+			time.sleep(config.interval)
 			rv = self.app.post('/user/',data=dict(user_name=USER_NAME,user_email='123456@qq.com', _csrf_token =csrf_token), follow_redirects=True)
 			self.assertIn(b'please confirme email',rv.data)
 
@@ -142,7 +145,8 @@ class FlaskrTestCase(unittest.TestCase):
 			wrongEmail1 = 'qwerasdf'
 			wrongEmail2 = 'qweradsf.'
 			wrongEmail3 = 'qwerqwasdf@'
-			wrongEmail4 = 'qweradf@tjctf.org'
+			wrongEmail4 = 'qweradf@hustctf.org'
+			wrongEmail5 = '3333333@qq.com'
 			rv = self.register('2'+USER_NAME,'',USER_PASSWORD,USER_PASSWORD)
 			self.assertIn(b'wrong email format.',rv[0].data)
 			rv = self.register('2'+USER_NAME,wrongEmail1,USER_PASSWORD,USER_PASSWORD)
@@ -153,6 +157,8 @@ class FlaskrTestCase(unittest.TestCase):
 			self.assertIn(b'wrong email format.',rv[0].data)
 			rv = self.register('2'+USER_NAME,wrongEmail4,USER_PASSWORD,USER_PASSWORD)
 			self.assertIn(b'You are lying',rv[0].data)
+			rv = self.register('2'+USER_NAME,wrongEmail5,USER_PASSWORD,USER_PASSWORD)
+			self.assertIn(b'The email has been used!',rv[0].data)
 			# wrong pwd
 			rv = self.register('2'+USER_NAME,'358693294@qq.com','123456ASD','123456')
 			self.assertIn(b'Entered passwords differs',rv[0].data)

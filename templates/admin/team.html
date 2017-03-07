@@ -19,6 +19,7 @@
         <input required type="text" name="reason" id="reason" />
         <label for="reason">原因</label>
     </div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
     <button class="btn waves-effect waves-light" type="submit">调整</button>
 </form>
 <br></br>

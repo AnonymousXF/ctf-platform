@@ -4,6 +4,7 @@ from utils import decorators, flag, scoreboard
 from ctferror import *
 from datetime import datetime
 import config
+from flask import current_app
 
 api = Blueprint("api", "api", url_prefix="/api")
 @api.route("/submit/<int:challenge>.json", methods=["POST"])

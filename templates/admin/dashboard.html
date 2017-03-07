@@ -34,7 +34,7 @@
 <div class="col s8 offset-s1">
 <table class="sortable">
     <thead>
-        <tr><th>队伍名</th><th>队伍队长</th><th>队长邮箱</th><th></th><th></th>
+        <tr><th>队伍名</th><th>队伍队长</th><th>队长邮箱</th></th>
     </thead>
     <tbody>
         {% for team in team_notconfirmed %}
@@ -62,7 +62,7 @@
 </table>
 <br></br>
 <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
-<button class="btn waves-effect waves-light" type="submit" style="text-align:center;">确定</button>
+<div align="center"><button class="btn waves-effect waves-light" type="submit" style="text-align:center;">确定</button></div>
 </div>
 </div>
 </form>

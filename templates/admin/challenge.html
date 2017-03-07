@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h4>管理题目</h4>
+<div class="row">
+<div class="col s10 offset-s1">
+<table class="sortable">
+    <thead>
+        <tr><th>题目名</th><th>题目类型</th><th>状态</th><th>分值</th></th>
+    </thead>
+    <tbody>
+        {% for challenge in challenges %}
+        <tr>
+            <td>
+                {{ challenge.name }}
+            </td>
+            <td>{{ challenge.category }}</td>
+            <td><a href="{{ url_for('admin.admin_enable_challenge', tid=challenge.id, csrf=csrf_token()) }}">{{ challenge.enabled }}</a></td>
+            <td>{{ challenge.points }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+<br></br>
+<h4>管理虚拟机</h4>
+<p></p>
+{% if not conn %}
+<form action="{{ url_for('admin.admin_get_url') }}" method="POST">
+	<div class="row">
+	<div class="col s8 offset-s1">
+	<div class="input-field">
+        <input required maxlength="50" id="url" name="url" type="text" />
+        <label for="url">连接路径(本地："qemu:///system"，远程:"qemu+ssh://user@ip/system")</label>
+    </div>
+    <div class="input-field">
+        <input required maxlength="50" id="xml" name="xml" type="text" />
+        <label for="xml">虚拟机xml的路径(如"/etc/libvirt/qemu/")</label>
+    </div>
+    </div>
+    </div>
+    <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+  	<div align="center"><button class="btn waves-effect waves-light" type="submit" name="action">连接服务器<i class="material-icons right">send</i>
+  	</button></div>
+</form>
+{% else %}
+	<div class="row">
+	<div class="col s10 offset-s1">
+	<table class="sortable">
+	    <thead>
+	        <tr><th>虚拟机名</th><th>内存</th><th>cpu数</th><th>状态</th></th>
+	    </thead>
+	    <tbody>
+	        {% for vmachine in vmachines %}
+	        <tr>
+	            <td>
+	                <a href="{{ url_for('admin.admin_edit_vmachine', tid=vmachine.id) }}">{{ vmachine.name }}</a>
+	            </td>
+	            <td>{{ vmachine.memory }}</td>
+	            <td>{{ vmachine.cpu }}</td>
+	            <td>{{ vmachine.status }}</td>
+	        </tr>
+	        {% endfor %}
+	    </tbody>
+	</table>
+	</div>
+	</div>
+	<br></br>
+{% endif %}
+{% endblock %}

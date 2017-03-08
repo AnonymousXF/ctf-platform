@@ -30,7 +30,7 @@ def afterRegister_backup():
 
 if __name__ == '__main__':
     if datetime.now() >= config.register_end:
-	#/home/backup/... is the path in docker file system ,not the path in the host
+	#/home/backup/... is the path in docker file system ,not the path in the host.
         files = os.listdir("/home/backup")
 	exsist = False
         for file in files:

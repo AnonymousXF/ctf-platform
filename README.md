@@ -19,14 +19,10 @@
 创建secrets文件，格式如下：
 
 ```
-mailgun_url: https://api.mailgun.net/v3/yourdomain.com
-mailgun_key: key-yourmailgunkey
-recaptcha_key: yourrecaptchakey
-recaptcha_secret: yoursecret
 key: flasksessionkey
 ```
 
-第1、2行不用管，这里使用了邮箱的SMTP服务来代替；第3、4行是谷歌的第三方插件的公私钥，由于要翻墙才能使用，实际中取消了这一部分的功能；第5行为flasksession的密钥，最好设置为一个随机的字符串。
+flasksession的密钥最好设置为一个随机的字符串。
 
 **在配置SMTP服务的时候，需要配置几个环境变量：**
 

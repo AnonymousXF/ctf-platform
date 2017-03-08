@@ -6,4 +6,5 @@ redis==2.10.5
 pyyaml==3.12
 oath==1.4.0
 flask_paginate==0.4.5
+sqlitebck
 

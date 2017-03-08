@@ -78,7 +78,7 @@ def scoreboard_variables():
     return var
 
 # Blueprints
-import api, admin
+from modules import api, admin
 app.register_blueprint(api.api)
 app.register_blueprint(admin.admin)
 
@@ -318,7 +318,7 @@ def team_register():
         team_leader = User.get(User.id == g.user.id)
         team = Team.create(name=team_name, eligible=team_elig, affiliation=affiliation, team_leader=team_leader)
         TeamMember.create(team=team,member=team_leader,member_confirmed=False)
-        if not config.debug:
+        if not app.debug:
             UserAccess.create(user=g.user, ip=misc.get_ip(), time=datetime.now())
         session["team_id"] = team.id
         app.logger.info(g.user.username+" register a team.")
@@ -690,4 +690,5 @@ app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
     app.logger.info("begin run")
-    app.run(host='0.0.0.0', debug=config.debug, port=8001)
+    app.run()
+    #app.run(host='0.0.0.0', debug=config.debug, port=8001)

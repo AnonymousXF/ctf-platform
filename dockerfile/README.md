@@ -53,31 +53,31 @@ docker run -d -p 8001:8001 -v /home/x/Documents/log:/home/log -v /home/x/Documen
 
 部署的文件结构如下：
 
+```
 |--Dockerfile Folder
 
-​		|--backup （共享目录，挂载docker容器中的backup目录，文件夹名字任取，docker run的时候 -v 后写上对应的文件夹路径）
+		|--backup （共享目录，挂载docker容器中的backup目录，文件夹名字任取，docker run的时候 -v 后写上对应的文件夹路径）
 
-​		|--log （共享目录，挂载docker容器中的log目录，文件夹名字任取，docker run的时候 -v 后写上对应的文件夹路径）
+		|--log （共享目录，挂载docker容器中的log目录，文件夹名字任取，docker run的时候 -v 后写上对应的文件夹路径）
 
-​		|--Dockerfile （dockefile文件）
+		|--Dockerfile （dockefile文件）
 
-​		|--ctf_platform （源码文件夹）
+		|--ctf_platform （源码文件夹）
 
-​		|--root （crontab配置文件）
+		|--root （crontab配置文件）
+```
 
 部署后，运行的容器中的文件结构如下：
 
+```
 |--home
 
-​		|--backup（用于放置备份的数据库的目录）
+		|--backup（用于放置备份的数据库的目录）
 
  		|--log （用于放置gunicorn启动后access.log和error.log的目录）
 
-​		|--app （平台源码目录）
-
-
-
-
+		|--app （平台源码目录）
+```
 
 部署完成后，即可通过映射到宿主机器的端口访问。
 

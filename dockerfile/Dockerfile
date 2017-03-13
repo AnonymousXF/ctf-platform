@@ -14,6 +14,7 @@ ENV MAIL_PASSWORD $PASSWORD
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
 &&  echo "Asia/Shanghai" > /etc/timezone
 
+
 #mkdir
 RUN mkdir /home/backup
 RUN mkdir /home/log
@@ -26,6 +27,7 @@ RUN chown -R root:crontab /var/spool/cron/crontabs/root \
 
 #add source code
 ADD ctf_platform /home/app
+ADD ctf_platform/ssh.py /root/ssh.py
 
 #VOLUME
 VOLUME /home/backup
@@ -38,6 +40,8 @@ RUN python ctftool create-tables
 #expose port
 EXPOSE 8001
 
-#start redis,cron
-CMD service redis-server start && /etc/init.d/cron start && gunicorn -c gun.py app:app
+RUN chmod 777 /home/app/startup.sh
 
+#start redis,cron
+#CMD service redis-server start && /etc/init.d/cron start && gunicorn -c gun.py app:app
+CMD ["./startup.sh"]

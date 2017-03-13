@@ -65,6 +65,8 @@ docker run -d -p 8001:8001 -v /home/x/Documents/log:/home/log -v /home/x/Documen
 		|--ctf_platform （源码文件夹）
 
 		|--root （crontab配置文件）
+		
+		|--setup.py（总的安装文件）
 ```
 
 部署后，运行的容器中的文件结构如下：
@@ -84,15 +86,6 @@ docker run -d -p 8001:8001 -v /home/x/Documents/log:/home/log -v /home/x/Documen
 
 
 5、docker中运行一些命令
-
-生成SSH公私钥：
-
-```
-docker exec -it ContainerID ssh-keygen -t rsa
-
-#生成后，将公钥拷贝到宿主机器，复制到配置虚拟机的服务器中
-docker cp ContainerID:/path/to/public_key /destination/to/host
-```
 
 创建管理员账户：
 

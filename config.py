@@ -12,7 +12,6 @@ tagline = "a cybersecurity competition created by HUSTCTF students"
 cdn = False
 apisubmit = True
 registration = True
-debug = True
 proxied_ip_header = "X-Forwarded-For"
 
 flag_rl = 5

@@ -20,7 +20,7 @@
      <emulator>/usr/bin/kvm-spice</emulator>
      <disk device="disk" type="file">
       <driver name="qemu" type="qcow2"/>           
-       <source file="/home/nana/Vmachine/FreeDOS/FreeDOS.qcow2"/>        
+       <source file="/home/vmachine/FreeDOS.qcow2"/>        
        <target bus="ide" dev="hda"/>
      </disk>
     <interface type="bridge">                                               

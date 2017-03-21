@@ -307,7 +307,7 @@ class FlaskrTestCase(unittest.TestCase):
 		# rv = self.app.post('/admin/geturl/', data=dict(url="qemu://222.0.0.1/system",xml="/etc/libvirt/qemu/", _csrf_token = csrf), follow_redirects=True)
 		# self.assertIn("连接服务器", rv.data)
 		# correct url
-		rv = self.app.post('/admin/geturl/', data=dict(url="qemu:///system",xml="../vmachine/",_csrf_token = csrf), follow_redirects=True)
+		rv = self.app.post('/admin/geturl/', data=dict(url="qemu+ssh://root@172.17.0.3/system",xml="/home/vmachine/",_csrf_token = csrf), follow_redirects=True)
 		self.assertIn("虚拟机名", rv.data)
 		# edit vmachine
 		vmachine = Vmachine.get(Vmachine.name==Vname)

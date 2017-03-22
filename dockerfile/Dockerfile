@@ -25,6 +25,7 @@ ADD root /var/spool/cron/crontabs/root
 RUN chown -R root:crontab /var/spool/cron/crontabs/root \
 &&  chmod 600 /var/spool/cron/crontabs/root
 
+
 #add source code
 ADD ctf_platform /home/app
 ADD ctf_platform/ssh.py /root/ssh.py
@@ -43,5 +44,4 @@ EXPOSE 8001
 RUN chmod 777 /home/app/startup.sh
 
 #start redis,cron
-#CMD service redis-server start && /etc/init.d/cron start && gunicorn -c gun.py app:app
 CMD ["./startup.sh"]

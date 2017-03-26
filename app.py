@@ -591,7 +591,7 @@ def open_ticket():
     else:
         if g.redis.get("ticketl{}".format(session["team_id"])):
             return "You're doing that too fast."
-        g.redis.set("ticketl{}".format(g.team.id), "1", 30)
+        g.redis.set("ticketl{}".format(g.team.id), "1", 10)
         summary = request.form["summary"]
         description = request.form["description"]
         opened_at = datetime.now()
@@ -623,7 +623,7 @@ def team_ticket_detail(ticket):
 def team_ticket_comment(ticket):
     if g.redis.get("ticketl{}".format(session["team_id"])):
         return "You are doing that too fast."
-    g.redis.set("ticketl{}".format(g.team.id), "1", 30)
+    g.redis.set("ticketl{}".format(g.team.id), "1", 10)
     try:
         ticket = TroubleTicket.get(TroubleTicket.id == ticket)
     except TroubleTicket.DoesNotExist:

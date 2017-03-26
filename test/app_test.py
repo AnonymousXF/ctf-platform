@@ -260,8 +260,6 @@ class FlaskrTestCase(unittest.TestCase):
 		self.app.post('/team_register/',data = data, follow_redirects = True)
 		rv = self.app.post('/team_modify/', data=data, follow_redirects = True)
 		self.assertIn(b'nothig changed!',rv.data)
-		rv = self.app.post('/team_modify/', data=data, follow_redirects = True)
-		self.assertIn(b'nothig changed!',rv.data)
 		# unique team name
 		User.create(username='nana', password=pwhash, email='56565@qq.com', email_confirmed=True, email_confirmation_key='12345678956565')
 		user = User.get(User.username=='nana')

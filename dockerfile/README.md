@@ -8,7 +8,7 @@
 
 ```shell
 #进入存放镜像文件的目录
-cat base_environment.tar.gz | docker import - base_env
+docker import base_environment.tar.gz  base_env
 ```
 
 完成后，查看本地镜像是否导入成功：
@@ -66,10 +66,10 @@ docker run -d -p 8001:8001 -v /home/x/Documents/log:/home/log -v /home/x/Documen
 
 		|--root （crontab配置文件）
 		
-		|--setup.py（总的安装文件）
+		|--setup.py（总的安装文件,以上的步骤均写在此脚本中，只需运行此脚本即可，即python setup.py）
 ```
 
-部署后，运行的容器中的文件结构如下：
+部署后，运行的容器中的文件结构如下：（容器启动时，容器内的当前路径为/home/app）
 
 ```
 |--home
@@ -104,6 +104,12 @@ docker exec -it ContainerID python ctftool recache-solves
 
 ```
 docker exec -it ContainerID bash -c "cd test && python allTest.py"
+```
+
+建立SSH连接（连接虚拟机服务器，以及连接测试所用的docker容器）：
+
+```
+docker exec -it ContainerID python ssh.py
 ```
 
 

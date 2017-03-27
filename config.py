@@ -2,7 +2,7 @@
 import os
 from datetime import datetime
 
-ctf_name = "HUSTCTF"
+ctf_name = ""
 #IRC Channel
 ctf_chat_channel = "#hustctf"
 #ctf_home_url = "http://tjctf.org"

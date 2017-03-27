@@ -337,7 +337,7 @@ def team_modify():
         affi_changed = (affiliation!=g.team.affiliation)
         elig_changed = (team_elig!=g.team.eligible)
         if not name_changed and not affi_changed and not elig_changed:
-            flash("nothig changed!")
+            flash("nothing changed!")
             return redirect(url_for('team_dashboard'))
         if name_changed:
             try:
@@ -380,7 +380,7 @@ def team_join():
                 flash("The request has sent to leader!")
                 return redirect(url_for('team_dashboard'))
         except Team.DoesNotExist:
-            flash("team name don not exist!")
+            flash("team name do not exist!")
             return redirect(url_for('team_dashboard'))
 
 @app.route('/user_add/', methods=["POST"])   #审核加入队伍请求
@@ -591,9 +591,15 @@ def open_ticket():
     else:
         if g.redis.get("ticketl{}".format(session["team_id"])):
             return "You're doing that too fast."
-        g.redis.set("ticketl{}".format(g.team.id), "1", 30)
+        g.redis.set("ticketl{}".format(g.team.id), "1", 10)
         summary = request.form["summary"]
         description = request.form["description"]
+        if not summary:
+            flash("summary can not be null")
+            return redirect(url_for("team_tickets"))
+        if not description:
+            flash("description can not be null")
+            return redirect(url_for("team_tickets"))
         opened_at = datetime.now()
         ticket = TroubleTicket.create(team=g.team, summary=summary, description=description, opened_at=opened_at)
         app.logger.info(g.user.username+" opened a ticket,ticket's id is "+str(ticket.id))
@@ -623,7 +629,7 @@ def team_ticket_detail(ticket):
 def team_ticket_comment(ticket):
     if g.redis.get("ticketl{}".format(session["team_id"])):
         return "You are doing that too fast."
-    g.redis.set("ticketl{}".format(g.team.id), "1", 30)
+    g.redis.set("ticketl{}".format(g.team.id), "1", 10)
     try:
         ticket = TroubleTicket.get(TroubleTicket.id == ticket)
     except TroubleTicket.DoesNotExist:
@@ -635,7 +641,11 @@ def team_ticket_comment(ticket):
         return redirect(url_for("team_tickets"))
 
     if request.form["comment"]:
-        TicketComment.create(ticket=ticket, comment_by=g.team.name, comment=request.form["comment"], time=datetime.now())
+        comment = request.form["comment"]
+        if not comment:
+            flash("comment can not be null")
+            return redirect(url_for("team_ticket_detail", ticket=ticket.id))
+        TicketComment.create(ticket=ticket, comment_by=g.team.name, comment=comment, time=datetime.now())
         app.logger.info(g.user.username+" comment a ticket,ticket's id is "+str(ticket.id))
         flash("Comment added.")
 
@@ -690,5 +700,5 @@ app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 if __name__ == '__main__':
     app.logger.info("begin run")
-    #app.run(host='0.0.0.0', debug=config.debug, port=8001)
+    #app.run(host='0.0.0.0', port=8001, ssl_context = 'adhoc')
     app.run()

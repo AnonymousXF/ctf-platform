@@ -2,7 +2,7 @@
     <name>FreeDOS</name>                     
     <memory>1048576</memory>                 
     <currentMemory>1048576</currentMemory>    
-    <vcpu>1</vcpu>                                                   
+    <vcpu>2</vcpu>                                                   
     <os>
       <type arch="x86_64" machine="pc">hvm</type>
       <boot dev="hd"/>                                         
@@ -20,7 +20,7 @@
      <emulator>/usr/bin/kvm-spice</emulator>
      <disk device="disk" type="file">
       <driver name="qemu" type="qcow2"/>           
-       <source file="/home/nana/Vmachine/FreeDOS/FreeDOS.qcow2"/>        
+       <source file="/home/nana/ctf-platform/vmachine/FreeDOS.qcow2"/>        
        <target bus="ide" dev="hda"/>
      </disk>
     <interface type="bridge">                                               

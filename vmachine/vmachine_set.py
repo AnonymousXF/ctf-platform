@@ -53,7 +53,6 @@ def define_xml():
 				f.write(newStrs)
 				f.close()
 				myDom = conn.defineXML(newStrs)
-				myDom.create()
 	return True
 
 if __name__=='__main__':

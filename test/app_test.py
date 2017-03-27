@@ -289,7 +289,7 @@ class FlaskrTestCase(unittest.TestCase):
 		#Test team_modify -----/team_modify/
 		##nothing change
 		rv = self.app.post('/team_modify/', data = nothing_change, follow_redirects = True)
-		self.assertIn(b'nothig changed!', rv.data)
+		self.assertIn(b'nothing changed!', rv.data)
 		##exist team_name
 		rv = self.app.post('/team_modify/', data = exist_team_name, follow_redirects = True)
 		self.assertIn(b'The team name has been used.', rv.data)
@@ -321,7 +321,7 @@ class FlaskrTestCase(unittest.TestCase):
 		#Test team_join -----/team_join/
 		##not exist team
 		rv = self.app.post('/team_join/',data = not_exist_team, follow_redirects = True)
-		self.assertIn(b'team name don not exist!', rv.data)
+		self.assertIn(b'team name do not exist!', rv.data)
 		##team has not been agreed
 		rv = self.app.post('/team_join/',data = test_team, follow_redirects = True)
 		self.assertIn(b'The team has not be agreed by admin.Please wait,or join another team!', rv.data)

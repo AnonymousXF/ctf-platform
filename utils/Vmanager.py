@@ -1,7 +1,7 @@
+#-*-coding:utf-8-*-
 import os
 import sys
 import libvirt
-import sys
 from xml.dom import minidom
 from flask import current_app
 
@@ -79,15 +79,25 @@ def destroyDom(conn, name):
 		current_app.logger.error(e)
 		return False
 
-def modify_cpu(conn, name, cpuNum, xml):
+def modify_cpu(address, conn, name, cpuNum, xml):
+	ssh = address.split("//")[1].split("/")[0]
+	cwd = os.getcwd()
+	cwd = cwd+'/'
+	try:
+		# 将远程主机的xml文件复制到当前目录下。
+		os.system("scp "+ssh+":"+xml+name+".xml "+cwd)
+		os.system("ssh "+ssh+" rm "+xml+name+".xml")
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 	myDom = conn.lookupByName(name)
 	state = myDom.isActive()
 	if state:
 		destroyDom(conn, name)
 	myDom.undefine()
-	xml = xml+name+".xml"
+	file = name+".xml"
 	try:
-		with open(xml) as f:
+		with open(file) as f:
 			strs = f.read()
 	except Exception, e:
 		current_app.logger.error(e)
@@ -96,23 +106,40 @@ def modify_cpu(conn, name, cpuNum, xml):
 	domainNode = xmlDom.getElementsByTagName("domain")[0]
 	domainNode.getElementsByTagName("vcpu")[0].childNodes[0].nodeValue = cpuNum
 	newStrs = xmlDom.toxml()
-	f = open(xml, "w")
+	f = open(file, "w")
 	f.write(newStrs)
+	f.close()
+	try:
+		os.system("scp "+cwd+name+".xml "+ssh+":"+xml)
+		os.system("rm "+name+".xml")
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 	myDom = conn.defineXML(newStrs)
 	if state:
 		myDom.create()
 	current_app.logger.info("modify vmachine cpu "+name+" success.")
 	return True
  
-def modify_memory(conn, name, memoryNum, xml):
+def modify_memory(address, conn, name, memoryNum, xml):
+	ssh = address.split("//")[1].split("/")[0]
+	cwd = os.getcwd()
+	cwd = cwd+'/'
+	try:
+		# 将远程主机的xml文件复制到当前目录下。
+		os.system("scp "+ssh+":"+xml+name+".xml "+cwd)
+		os.system("ssh "+ssh+" rm "+xml+name+".xml")
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 	myDom = conn.lookupByName(name)
 	state = myDom.isActive()
 	if state:
 		destroyDom(conn, name)
 	myDom.undefine()
-	xml = xml+name+".xml"
+	file = name+".xml"
 	try:
-		with open(xml) as f:
+		with open(file) as f:
 			strs = f.read()
 	except Exception, e:
 		current_app.logger.error(e)
@@ -122,8 +149,15 @@ def modify_memory(conn, name, memoryNum, xml):
 	domainNode.getElementsByTagName("memory")[0].childNodes[0].nodeValue = memoryNum
 	domainNode.getElementsByTagName("currentMemory")[0].childNodes[0].nodeValue = memoryNum
 	newStrs = xmlDom.toxml()
-	f = open(xml, "w")
+	f = open(file, "w")
 	f.write(newStrs)
+	f.close()
+	try:
+		os.system("scp "+cwd+name+".xml "+ssh+":"+xml)
+		os.system("rm "+name+".xml")
+	except Exception, e:
+		current_app.logger.error(e)
+		return False
 	myDom = conn.defineXML(newStrs)
 	if state:
 		myDom.create()

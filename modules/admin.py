@@ -194,7 +194,7 @@ def admin_edit_vmachine(tid):
             if not memory.isdigit():
                 flash("must be digital")
                 return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
-            if not utils.Vmanager.modify_memory(conn,vmachine.name,int(memory)*1024,xml):
+            if not utils.Vmanager.modify_memory(url,conn,vmachine.name,int(memory)*1024,xml):
                 flash("modify memory failed.")
             else:
                 vmachine.memory = int(memory)
@@ -205,7 +205,7 @@ def admin_edit_vmachine(tid):
             if cpu < '1' or cpu > '4':
                 flash("cpu should between 1 and 4") 
                 return redirect(url_for('.admin_edit_vmachine' ,tid=vmachine.id))
-            if not utils.Vmanager.modify_cpu(conn,vmachine.name,int(cpu),xml):
+            if not utils.Vmanager.modify_cpu(url,conn,vmachine.name,int(cpu),xml):
                 flash("modify cpu failed.")
             else:
                 vmachine.cpu = int(cpu)

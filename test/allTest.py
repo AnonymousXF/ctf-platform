@@ -3,7 +3,7 @@ import unittest
 import coverage
 
 
-COV = coverage.coverage(branch=True, include=['../*.py','../utils/*','../modules/*'], omit = ['./*_test.py']) 
+COV = coverage.coverage(branch=True, include=['../*.py','../utils/*','../modules/*'], omit = ['*_test.py','../gun.py','../ssh.py','../yeshello.py']) 
 COV.start()
 
 tests = unittest.TestLoader().discover('.', pattern='*_test.py')

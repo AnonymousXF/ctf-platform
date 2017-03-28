@@ -8,13 +8,9 @@
         <label for="username">用户名</label>
     </div>
     <div class="input-field">
-        <input id="password" name="password" type="password" />
+        <input id="password" name="password" type="password" autocomplete="off" />
         <label for="password">密码</label>
     </div>
-   <!--  <div class="input-field">
-        <input id="two" name="two" type="text" />
-        <label for="two">2FA</label>
-    </div> -->
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
     <button class="btn waves-effect waves-light" type="submit">登录</button>
 </form>

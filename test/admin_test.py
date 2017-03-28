@@ -295,8 +295,6 @@ class FlaskrTestCase(unittest.TestCase):
 		# not login
 		rv = self.app.get('/admin/challenge/', follow_redirects=True)
 		self.assertIn('You must be an admin to access that page.', rv.data)
-		challenge = Challenge.create(name=Vname,category='Web',author='nana',description='test,test,test',points='120',flag='flag{whatever}')
-		rv = self.app.get('/admin/challenge/', follow_redirects=True)
 		#login test challenge.html
 		rv = self.login(TEST_ADMIN_NAME, TEST_ADMIN_PASSWORD)
 		csrf = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', rv.data)[0]
@@ -307,7 +305,7 @@ class FlaskrTestCase(unittest.TestCase):
 		# rv = self.app.post('/admin/geturl/', data=dict(url="qemu://222.0.0.1/system",xml="/etc/libvirt/qemu/", _csrf_token = csrf), follow_redirects=True)
 		# self.assertIn("连接服务器", rv.data)
 		# correct url
-		rv = self.app.post('/admin/geturl/', data=dict(url="qemu:///system",xml="../vmachine/",_csrf_token = csrf), follow_redirects=True)
+		rv = self.app.post('/admin/geturl/', data=dict(url="qemu+ssh://root@172.17.0.2/system",xml="/home/vmachine/",_csrf_token = csrf), follow_redirects=True)
 		self.assertIn("虚拟机名", rv.data)
 		# edit vmachine
 		vmachine = Vmachine.get(Vmachine.name==Vname)
@@ -367,9 +365,6 @@ class FlaskrTestCase(unittest.TestCase):
 		data = dict(vmachine_memory='1024',vmachine_cpu='1',vmachine_status='shutdown',_csrf_token = csrf)
 		rv = self.app.post('/admin/vmachine/'+str(vmachine.id)+'/', data=data, follow_redirects=True)
 		self.assertIn('shutdown', rv.data)
-
-
-
 
 if __name__ == '__main__':
 	unittest.main()

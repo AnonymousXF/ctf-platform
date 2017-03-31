@@ -179,7 +179,7 @@ def confirm_code():
             flash("Not exist!")
             return render_template("forget_pwd.html")
 
-@app.route('/reset_pwd/',methods=["POST"])
+@app.route('/reset_pwd/',methods=["GET","POST"])
 @decorators.login_required
 def reset_pwd():
     if request.method == "POST":
@@ -198,7 +198,11 @@ def reset_pwd():
         app.logger.info(g.user.username+" reset pwd.")
         flash("Success")
         session.pop("user_id")
+        if "team_id" in session:
+            session.pop("team_id")
         return redirect(url_for('login'))
+    else:
+        return render_template("reset_pwd.html")
 
 @app.route('/register/', methods=["GET", "POST"])
 def register():

@@ -47,12 +47,12 @@ class FlaskrTestCase(unittest.TestCase):
 		tables = [User, Team, TeamMember, UserAccess, Challenge, ChallengeSolve, ChallengeFailure, NewsItem, TroubleTicket, TicketComment, Notification, ScoreAdjustment, AdminUser]
 		[i.drop_table() for i in tables]
 
-	def login(self, user_name, user_pwd):
+	def login(self, user_email, user_pwd):
 		#Get csrf_token
 		html = self.app.get('/login/', follow_redirects = True).data
 		csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />', html)[0]
 		#Post data
-		data = dict(user_name = user_name,
+		data = dict(user_email = user_email,
                     user_pwd = user_pwd, 
                     _csrf_token = csrf_token)
 		return self.app.post('/login/',data = data,follow_redirects = True), csrf_token
@@ -79,7 +79,7 @@ class FlaskrTestCase(unittest.TestCase):
 		User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY)
 		
 		#Test Correct login-----/login/
-		rv, csrf_token = self.login(USER_NAME,USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL,USER_PASSWORD)
 		self.assertIn(b'Login successful.', rv.data)
 
 		#Test logout -----/logout/
@@ -89,9 +89,9 @@ class FlaskrTestCase(unittest.TestCase):
 		#Test Wrong login-----/login/
 		rv, csrf_token = self.login('',USER_PASSWORD)
 		self.assertIn(b'Not exist!', rv.data)
-		rv, csrf_token = self.login(USER_NAME,'')
+		rv, csrf_token = self.login(USER_EMAIL,'')
 		self.assertIn(b'Wrong pwd!', rv.data)
-		rv, csrf_token = self.login(USER_NAME,'123456')
+		rv, csrf_token = self.login(USER_EMAIL,'123456')
 		self.assertIn(b'Wrong pwd!', rv.data)
 
 	def test_register(self):
@@ -146,7 +146,7 @@ class FlaskrTestCase(unittest.TestCase):
 		USER_NAME, USER_EMAIL, USER_PASSWORD, EMAIL_CONFIRMATION_KEY = 'user', '464059291@qq.com', '123456ASD', utils.misc.generate_confirmation_key()
 		pwhash = utils.admin.create_password(USER_PASSWORD)
 		User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY)
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 		CORRECT_DATA = dict(confirmation_key = EMAIL_CONFIRMATION_KEY, _csrf_token = csrf_token)
 		WRONG_DATA = dict(confirmation_key = EMAIL_CONFIRMATION_KEY + 'xxx', _csrf_token = csrf_token)
 
@@ -164,23 +164,15 @@ class FlaskrTestCase(unittest.TestCase):
 		pwhash = utils.admin.create_password(USER_PASSWORD)
 		User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY, email_confirmed = True)
 		User.create(username = 'test', password = pwhash, email = '3203155256@qq.com', email_confirmation_key = EMAIL_CONFIRMATION_KEY, email_confirmed = True)
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 		##correct case
 		nothing_changed = dict(user_name = USER_NAME, user_email = USER_EMAIL, _csrf_token = csrf_token)
 		correct_name_change = dict(user_name = USER_NAME + '_', user_email = USER_EMAIL, _csrf_token = csrf_token)
-		correct_email_change = dict(user_name = USER_NAME, user_email = 'jjxf251@163.com', _csrf_token = csrf_token)
 		##wrong name case
 		exist_name_change = dict(user_name = 'test', user_email = USER_EMAIL, _csrf_token = csrf_token)
 		long_name_change = dict(user_name = 'a' * 100, user_email = USER_EMAIL, _csrf_token = csrf_token)
 		null_name_change = dict(user_name = '', user_email = USER_EMAIL, _csrf_token = csrf_token)
-		##wrong email case
-		exist_email_change = dict(user_name = USER_NAME, user_email = '3203155256@qq.com', _csrf_token = csrf_token)
-		wrong_email_format_change = [dict(user_name = USER_NAME, user_email = '', _csrf_token = csrf_token),
-									 dict(user_name = USER_NAME, user_email = 'qwerasdf', _csrf_token = csrf_token),
-									 dict(user_name = USER_NAME, user_email = 'qwerasdf.', _csrf_token = csrf_token),
-									 dict(user_name = USER_NAME, user_email = 'qwerasdf@', _csrf_token = csrf_token),
-									 dict(user_name = USER_NAME, user_email = 'qwerasdf@hustctf.org', _csrf_token = csrf_token)
-									]
+
 
 		#Test user -----/user/
 		##GET method
@@ -203,41 +195,18 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.app.post('/user/', data = null_name_change, follow_redirects = True)
 		self.assertIn(b'wrong name format.',rv.data)
 		time.sleep(config.interval)
-		###null email change
-		rv = self.app.post('/user/', data = wrong_email_format_change[0], follow_redirects = True)
-		self.assertIn(b'wrong email format.',rv.data)
-		time.sleep(config.interval)
-		###wrong email format change
-		rv = self.app.post('/user/', data = wrong_email_format_change[1], follow_redirects = True)
-		self.assertIn(b'wrong email format.',rv.data)
-		time.sleep(config.interval)
-		rv = self.app.post('/user/', data = wrong_email_format_change[2], follow_redirects = True)
-		self.assertIn(b'wrong email format.',rv.data)
-		time.sleep(config.interval)
-		rv = self.app.post('/user/', data = wrong_email_format_change[3], follow_redirects = True)
-		self.assertIn(b'wrong email format.',rv.data)
-		time.sleep(config.interval)
-		rv = self.app.post('/user/', data = wrong_email_format_change[4], follow_redirects = True)
-		self.assertIn(b'You are lying',rv.data)
-		time.sleep(config.interval)
-		###exist email change
-		rv = self.app.post('/user/', data = exist_email_change, follow_redirects = True)
-		self.assertIn(b'The email has been used!',rv.data)
 		time.sleep(config.interval)
 		###correct name change
 		rv = self.app.post('/user/', data = correct_name_change, follow_redirects = True)
 		self.assertIn(b'save change.',rv.data)
 		time.sleep(config.interval)
-		###correct email change
-		rv = self.app.post('/user/', data = correct_email_change, follow_redirects = True)
-		self.assertIn(b'please confirme email',rv.data)
 
 	def test_team_register(self):
     	#Test Case
 		USER_NAME, USER_EMAIL, USER_PASSWORD, EMAIL_CONFIRMATION_KEY = 'user', '464059291@qq.com', '123456ASD', utils.misc.generate_confirmation_key()
 		pwhash = utils.admin.create_password(USER_PASSWORD)
 		testUser = User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY)
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		null_team_name = dict(team_name = '', affiliation = 'test affiliation', team_eligibility = True, _csrf_token = csrf_token)
 		long_team_name = dict(team_name = 'a' * 100, affiliation = 'test affiliation', team_eligibility = True, _csrf_token = csrf_token)
@@ -273,7 +242,7 @@ class FlaskrTestCase(unittest.TestCase):
 		USER_NAME, USER_EMAIL, USER_PASSWORD, EMAIL_CONFIRMATION_KEY = 'user', '464059291@qq.com', '123456ASD', utils.misc.generate_confirmation_key()
 		pwhash = utils.admin.create_password(USER_PASSWORD)
 		testUser = User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY, email_confirmed = True)
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		TEAM_NAME, TEAM_AFFILIATION, TEAM_ELIGIBLE = 'testTeam', 'testAffiliation', True
 		Team.create(name = TEAM_NAME + '1', affiliation = TEAM_AFFILIATION, eligible = TEAM_ELIGIBLE, team_leader = testUser)
@@ -314,7 +283,7 @@ class FlaskrTestCase(unittest.TestCase):
 		team = Team.create(name = TEAM_NAME, affiliation = TEAM_AFFILIATION, eligible = TEAM_ELIGIBLE, team_leader = testUser1)
 		TeamMember.create(team = team, member = testUser1, member_confirmed = True)
 		
-		rv, csrf_token = self.login(USER_NAME + '2', USER_PASSWORD)
+		rv, csrf_token = self.login('2' + USER_EMAIL, USER_PASSWORD)
 		not_exist_team = dict(team_name = 'not_exist', _csrf_token = csrf_token)
 		test_team = dict(team_name = TEAM_NAME, _csrf_token = csrf_token)
 
@@ -348,7 +317,7 @@ class FlaskrTestCase(unittest.TestCase):
 		TeamMember.create(team = team, member = testUser1, member_confirmed = True)
 		TeamMember.create(team = team, member = testUser2)
 
-		rv, csrf_token = self.login(USER_NAME + '1', USER_PASSWORD)
+		rv, csrf_token = self.login('1' + USER_EMAIL, USER_PASSWORD)
 
 		#Test user_add -----/user_add/
 		##only can choose one checkbox
@@ -376,7 +345,7 @@ class FlaskrTestCase(unittest.TestCase):
 		pwhash = utils.admin.create_password(USER_PASSWORD)
 		testUser = User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY, email_confirmed = True)
 
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		#Test challenge -----/challenge/
 		##without join a team
@@ -387,7 +356,7 @@ class FlaskrTestCase(unittest.TestCase):
 		team = Team.create(name = TEAM_NAME, affiliation = TEAM_AFFILIATION, eligible = TEAM_ELIGIBLE, team_leader = testUser)
 		TeamMember.create(team = team, member = testUser, member_confirmed = True)
 		self.logout()
-		self.login(USER_NAME, USER_PASSWORD)
+		self.login(USER_EMAIL, USER_PASSWORD)
 		rv = self.app.get('/challenges/', content_type = 'html/text', follow_redirects = True)
 		self.assertIn(b'收起题目',rv.data)
 
@@ -406,7 +375,7 @@ class FlaskrTestCase(unittest.TestCase):
 		r = redis.StrictRedis()
 		r.hset("solves", chal.id, chal.solves.count())
 
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		wrong_flag = dict(flag = CHAL_FLAG + '_', _csrf_token = csrf_token)
 		correct_flag = dict(flag = CHAL_FLAG, _csrf_token = csrf_token)
@@ -448,14 +417,14 @@ class FlaskrTestCase(unittest.TestCase):
 		rv = self.app.get('/tickets/1/', follow_redirects = True)
 		self.assertIn(b'Need login first.', rv.data)
 		##no team
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 		rv = self.app.get('/tickets/1/', follow_redirects = True)
 		self.assertIn(b'Please join a team!', rv.data)
 		## /tickets/
 		team = Team.create(name = TEAM_NAME, affiliation = TEAM_AFFILIATION, eligible = TEAM_ELIGIBLE, team_leader = testUser)
 		TeamMember.create(team = team, member = testUser, member_confirmed = True)
 		self.logout()
-		self.login(USER_NAME, USER_PASSWORD)
+		self.login(USER_EMAIL, USER_PASSWORD)
 		rv = self.app.get('/tickets/', follow_redirects = True)
 		self.assertIn(b'你现在没有开启的tickets.', rv.data)
 
@@ -469,7 +438,7 @@ class FlaskrTestCase(unittest.TestCase):
 		team = Team.create(name = TEAM_NAME, affiliation = TEAM_AFFILIATION, eligible = TEAM_ELIGIBLE, team_leader = testUser)
 		TeamMember.create(team = team, member = testUser, member_confirmed = True)
 
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		TICKET_SUMMARY, TICKET_DESCRIBE = 'ticket_summary', 'ticket_description'
 		test_ticket = dict(summary = TICKET_SUMMARY, description = TICKET_DESCRIBE, _csrf_token = csrf_token)
@@ -502,7 +471,7 @@ class FlaskrTestCase(unittest.TestCase):
 		team = Team.create(name = TEAM_NAME, affiliation = TEAM_AFFILIATION, eligible = TEAM_ELIGIBLE, team_leader = testUser)
 		TeamMember.create(team = team, member = testUser, member_confirmed = True)
 
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		TICKET_SUMMARY, TICKET_DESCRIBE = 'ticket_summary', 'ticket_description'
 		test_ticket = dict(summary = TICKET_SUMMARY, description = TICKET_DESCRIBE, _csrf_token = csrf_token)
@@ -550,18 +519,18 @@ class FlaskrTestCase(unittest.TestCase):
 		self.assertIn(b'忘记密码', rv.data)
 		##POST method
 		###not exist	
-		not_exist = dict(user_name = USER_NAME, _csrf_token = csrf_token)
+		not_exist = dict(user_email = USER_EMAIL, _csrf_token = csrf_token)
 		rv = self.app.post('/forget_pwd/', data = not_exist, follow_redirects = True)
 		self.assertIn(b'Not exist!', rv.data)
 		###not email confirmed
 		testUser = User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY)
-		not_confirmed = dict(user_name = USER_NAME, _csrf_token = csrf_token)
+		not_confirmed = dict(user_email = USER_EMAIL, _csrf_token = csrf_token)
 		rv = self.app.post('/forget_pwd/', data = not_confirmed, follow_redirects = True)
 		self.assertIn(b'Your email has not confirmed,you can input the confirmed code in your email', rv.data)
 		###email confirmed
 		testUser.email_confirmed = True
 		testUser.save()
-		confirmed = dict(user_name = USER_NAME, _csrf_token = csrf_token)
+		confirmed = dict(user_email = USER_EMAIL, _csrf_token = csrf_token)
 		rv = self.app.post('/forget_pwd/', data = confirmed, follow_redirects = True)
 		self.assertIn(b'The confirmed code has been send to your email', rv.data)
 	
@@ -576,15 +545,15 @@ class FlaskrTestCase(unittest.TestCase):
 		
 		#Test
 		##not exist
-		not_exist = dict(user_name1 = 'not_exist', confirm_code = '1234567890', _csrf_token = csrf_token)
+		not_exist = dict(user_email1 = 'not_exist', confirm_code = '1234567890', _csrf_token = csrf_token)
 		rv = self.app.post('/confirm_code/', data = not_exist, follow_redirects = True)
 		self.assertIn(b'Not exist',rv.data)
 		##wrong data
-		wrong_data = dict(user_name1 = USER_NAME, confirm_code = '123456789', _csrf_token = csrf_token)
+		wrong_data = dict(user_email1 = USER_EMAIL, confirm_code = '123456789', _csrf_token = csrf_token)
 		rv = self.app.post('/confirm_code/', data = wrong_data, follow_redirects = True)
 		self.assertIn(b'wrong',rv.data)
 		##correct data
-		correct_data = dict(user_name1 = USER_NAME, confirm_code = EMAIL_CONFIRMATION_KEY, _csrf_token = csrf_token)
+		correct_data = dict(user_email1 = USER_EMAIL, confirm_code = EMAIL_CONFIRMATION_KEY, _csrf_token = csrf_token)
 		rv = self.app.post('/confirm_code/', data = correct_data, follow_redirects = True)
 		self.assertIn(b'correct',rv.data)
 	
@@ -594,7 +563,7 @@ class FlaskrTestCase(unittest.TestCase):
 		pwhash = utils.admin.create_password(USER_PASSWORD)
 		User.create(username = USER_NAME, password = pwhash, email = USER_EMAIL, email_confirmation_key = EMAIL_CONFIRMATION_KEY, email_confirmed = True)
 
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		#Test reset_pwd -----/reset_pwd/
 		##diffrent input
@@ -625,7 +594,7 @@ class FlaskrTestCase(unittest.TestCase):
 		r = redis.StrictRedis()
 		r.hset("solves", chal.id, chal.solves.count())
 
-		rv, csrf_token = self.login(USER_NAME, USER_PASSWORD)
+		rv, csrf_token = self.login(USER_EMAIL, USER_PASSWORD)
 
 		#Test dynamic_display -----/dynamic_display/
 		##GET --- no nitice

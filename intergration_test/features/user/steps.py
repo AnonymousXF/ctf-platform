@@ -25,11 +25,11 @@ def visit_system(step):
 	world.app.response = world.app.get('/',follow_redirects=True)
 
 @step("I login with \"(.*)\",\"(.*)\"")
-def login(step,user_name, user_pwd):
+def login(step,user_email, user_pwd):
 	html = world.app.get('/login/',follow_redirects=True).data
 	world.app.csrf_token = re.findall(r'<input name="_csrf_token" type="hidden" value="(.*)" />',html)[0]
-	data = dict(user_name = user_name, user_pwd = user_pwd, _csrf_token = world.app.csrf_token)
-	world.app.name = user_name
+	world.app.email = user_email
+	data = dict(user_email = user_email, user_pwd = user_pwd, _csrf_token = world.app.csrf_token)
 	world.app.response = world.app.post('/login/',data = data,follow_redirects=True)
 
 @step("I login admin with \"(.*)\",\"(.*)\"")
@@ -83,14 +83,14 @@ def admin_in_database(step,admin_name,admin_pwd):
 	pwhash = utils.admin.create_password(admin_pwd.encode())
 	AdminUser.create(username=admin_name, password=pwhash, secret=secret)
 
-@step("I update my information with \"(.*)\",\"(.*)\"")
-def update_my_information(step,user_name,user_email):
-	data = dict(user_name=user_name,user_email=user_email, _csrf_token =world.app.csrf_token)
+@step("I update my information with \"(.*)\"")
+def update_my_information(step,user_name):
+	data = dict(user_name=user_name,_csrf_token =world.app.csrf_token)
 	world.app.response = world.app.post('/user/',data = data, follow_redirects=True)
 
 @step("I confirm my email")
 def confirm_email(step):
-	confirmation_key = User.get(User.username == world.app.name).email_confirmation_key
+	confirmation_key = User.get(User.email == world.app.email).email_confirmation_key
 	data = dict(confirmation_key = confirmation_key, _csrf_token = world.app.csrf_token)
 	world.app.response = world.app.post('/confirm_email/',data = data, follow_redirects=True)
 

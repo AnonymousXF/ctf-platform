@@ -114,10 +114,10 @@ def login():
     if request.method == "GET":
         return render_template("login.html")
     else:
-        username = request.form["user_name"]
+        email = request.form["user_email"]
         password = request.form["user_pwd"]
         try:
-            user = User.get(User.username == username)
+            user = User.get(User.email == email)
             result = utils.user.verify_password(user, password)
             if result:
                 session["user_id"] = user.id
@@ -126,11 +126,11 @@ def login():
                     session["team_id"] = teammember.team.id
                 except TeamMember.DoesNotExist:
                     pass
-                app.logger.info(username+" login successful")
+                app.logger.info(user.username+" login successful")
                 flash("Login successful.")
                 return redirect(url_for('team_dashboard'))
             else:
-                app.logger.info(username+" login failed,Wrong pwd!")
+                app.logger.info(user.username+" login failed,Wrong pwd!")
                 flash("Wrong pwd!")
                 return render_template("login.html")
         except User.DoesNotExist:
@@ -142,15 +142,15 @@ def forget_pwd():
     if request.method == "GET":
         return render_template("forget_pwd.html")
     else:
-        user_name =request.form['user_name']
+        email =request.form['user_email']
         try:
-            user = User.get(User.username==user_name)
+            user = User.get(User.email==email)
             if user.email_confirmed:
                 confirmation_key = misc.generate_confirmation_key()
                 #sendemail.send_confirmation_email(user.email, confirmation_key)
                 user.email_confirmation_key = confirmation_key
                 user.save()
-                app.logger.info(user_name+" forgot pwd!")
+                app.logger.info(email+" forgot pwd!")
                 flash("The confirmed code has been send to your email")
                 return render_template("forget_pwd.html")
             else:
@@ -163,10 +163,10 @@ def forget_pwd():
 @app.route('/confirm_code/', methods=["POST"])
 def confirm_code():
     if request.method == "POST":
-        user_name = request.form['user_name1']
+        email = request.form['user_email1']
         confirm_code = request.form['confirm_code']
         try:
-            user = User.get(User.username==user_name)
+            user = User.get(User.email==email)
             if user.email_confirmation_key==confirm_code:
                 flash("correct!")
                 session['user_id'] = user.id
@@ -431,10 +431,8 @@ def dashboard():
             return redirect(url_for('dashboard'))
 
         user_name = request.form["user_name"].strip()
-        user_email = request.form["user_email"].strip()
-        email_changed = (user_email != g.user.email)
         name_changed = (user_name != g.user.username)
-        if not email_changed and not name_changed:
+        if not name_changed:
             flash("nothing changed!")
             return redirect(url_for('dashboard'))
         if name_changed:
@@ -449,32 +447,9 @@ def dashboard():
                 flash("wrong name format.")
                 return redirect(url_for('dashboard'))
         g.user.username = user_name
-        g.user.email = user_email
-
         g.redis.set("ul{}".format(session["user_id"]), str(datetime.now()), config.interval)
-
-        if email_changed:
-            if not sendemail.is_valid_email(user_email):
-                flash("You are lying")
-                return redirect(url_for('dashboard'))
-            if not (user_email and "." in user_email and "@" in user_email):
-                flash("wrong email format.")
-                return redirect(url_for('dashboard'))
-            try:
-                if (User.get(User.email == user_email)):
-                    flash("The email has been used!")
-                    return redirect(url_for('dashboard'))
-            except User.DoesNotExist:
-                pass
-
-            g.user.email_confirmation_key = misc.generate_confirmation_key()
-            g.user.email_confirmed = False
-
-            sendemail.send_confirmation_email(user_email, g.user.email_confirmation_key)
-            flash("please confirme email")
-        else:
-            app.logger.info(g.user.username+" changed its infomation.")
-            flash("save change.")
+        app.logger.info(g.user.username+" changed its infomation.")
+        flash("save change.")
         g.user.save()
         return redirect(url_for('dashboard'))
 

@@ -76,7 +76,7 @@
     </div>
     <div class="input-field">
         <label for="user-email">邮箱</label>
-        <input required id="user-email" name="user_email" type="email" value="{{ user.email }}" />
+        <input required id="user-email" name="user_email" type="email" value="{{ user.email }}" readonly/>
     </div>
     <input name="_csrf_token" type="hidden" value="{{ csrf_token() }}" />
     <br /><br />
